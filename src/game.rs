@@ -97,7 +97,7 @@ impl Game {
                        |  ######/
                         \______/
   */
-  pub fn buy(&mut self, drug: Drug, amount: u32) {
+  pub fn buy(&mut self, drug: Drug, buy_amt: u32) {
     let price = match drug {
       Drug::Weed => 40,
       Drug::Cocaine => 50,
@@ -108,11 +108,11 @@ impl Game {
       Drug::Shrooms => 40,
     };
 
-    if self.cash >= price * amount {
-      self.cash -= price * amount;
-      let entry = self.inventory.entry(drug).or_default();
-      let (amt, _) = *entry;
-      *entry = (amt + amount, price);
+    let entry = self.inventory.entry(drug).or_default();
+    let (held_amt, _) = *entry;
+    if self.cash >= price * buy_amt {
+      self.cash -= price * buy_amt;
+      *entry = (held_amt + buy_amt, price);
     }
   }
 
@@ -126,7 +126,7 @@ impl Game {
     /#######/|  #######| ##| ## \  ### /###/
    |_______/  \_______/|__/|__/  \___/|___/
   */
-  pub fn sell(&mut self, drug: Drug, amount: u32) {
+  pub fn sell(&mut self, drug: Drug, sell_amt: u32) {
     let price = match drug {
       Drug::Weed => 40,
       Drug::Cocaine => 50,
@@ -138,15 +138,14 @@ impl Game {
     };
 
     let entry = self.inventory.entry(drug).or_default();
-    let (amt, cost) = *entry;
-    if amt <= 1 {
-      *entry = (0, 0);
-      return;
-    }
-    let total = amt * cost;
-    if total >= price * amount {
-      self.cash += price * amount;
-      *entry = (amt - amount, cost);
+    let (held_amt, _) = *entry;
+    if held_amt >= sell_amt {
+      self.cash += price * sell_amt;
+      if held_amt - sell_amt == 0 {
+        *entry = (0, 0);
+      } else {
+        *entry = (held_amt - sell_amt, price);
+      }
     }
   }
 
