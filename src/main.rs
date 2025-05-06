@@ -15,7 +15,7 @@ fn main() -> Result<(), Error> {
       viewport: ViewportBuilder::default()
         .with_inner_size(egui::vec2(800.0, 600.0))
         .with_resizable(false),
-      centered: false,
+      centered: true,
       ..Default::default()
     },
     Box::new(|cc| {

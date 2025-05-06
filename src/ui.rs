@@ -1,5 +1,6 @@
-use eframe::egui::{self, Align, Layout};
+use eframe::egui::{self, Align, Button, Layout};
 use egui_extras::Column;
+use hello_egui::flex::{Flex, item};
 
 use crate::drugs::Drug;
 use crate::game::Game;
@@ -101,23 +102,23 @@ pub fn top_right_panel(game: &mut Game, ctx: &egui::Context) {
   egui::TopBottomPanel::top("top_right_panel")
     .exact_height(ctx.screen_rect().height() / 2.0)
     .show(ctx, |ui| {
-      ui.with_layout(
-        egui::Layout::left_to_right(egui::Align::TOP).with_main_wrap(true),
-        |ui| {
-          for loc in [
-            Location::Fairfield,
-            Location::Oakwood,
-            Location::Lakeview,
-            Location::Highland,
-            Location::Edgewater,
-            Location::Centerville,
-          ] {
-            if ui.button(loc.to_string()).clicked() {
-              game.travel(loc);
-            }
+      Flex::horizontal().wrap(true).show(ui, |flex| {
+        for loc in [
+          Location::Fairfield,
+          Location::Oakwood,
+          Location::Lakeview,
+          Location::Highland,
+          Location::Edgewater,
+          Location::Centerville,
+        ] {
+          if flex
+            .add(item().grow(1.0), Button::new(loc.to_string()))
+            .clicked()
+          {
+            game.travel(loc);
           }
-        },
-      )
+        }
+      });
     });
 }
 
@@ -139,14 +140,18 @@ pub fn bottom_right_panel(game: &mut Game, ctx: &egui::Context) {
     ui.with_layout(
       egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
       |ui| {
-        ui.horizontal(|ui| {
-          ui.label("Repay Debt: ");
-          ui.add(egui::Slider::new(&mut game.repay_amt, 0..=game.debt));
-          if ui.button("Pay").clicked() {
+        Flex::horizontal().show(ui, |flex| {
+          flex.add(
+            item(),
+            egui::Slider::new(&mut game.repay_amt, 0..=game.debt),
+          );
+          if flex.add(item(), Button::new("Repay")).clicked() {
             game.pay_debt(game.repay_amt);
-            game.repay_amt = 0;
           }
         });
+
+        ui.separator();
+
         for drug in [
           Drug::Weed,
           Drug::Cocaine,
