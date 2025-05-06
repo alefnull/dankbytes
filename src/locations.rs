@@ -8,7 +8,7 @@
  | ##|  ######/|  #######|  #######  |  ####/| ##|  ######/| ##  | ## /#######/
  |__/ \______/  \_______/ \_______/   \___/  |__/ \______/ |__/  |__/|_______/
 */
-#[derive(Default)]
+#[derive(Default, PartialEq, Eq)]
 pub enum Location {
   #[default]
   Fairfield,

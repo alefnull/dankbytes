@@ -79,6 +79,9 @@ impl Game {
       \___/  |__/      \_______/    \_/    \_______/|__/  \___/|___/
   */
   pub fn travel(&mut self, location: Location) {
+    if self.location == location {
+      return;
+    }
     self.location = location;
     self.days += 1;
     self.debt += (self.debt as f32 * INTEREST_RATE) as u32;
