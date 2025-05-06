@@ -21,6 +21,8 @@ const INTEREST_RATE: f32 = 0.05;
 pub struct Game {
   pub location: Location,
   pub inventory: HashMap<Drug, (u32, u32)>,
+  pub prices: [u32; 7],
+  pub trades: [u32; 7],
   pub cash: u32,
   pub debt: u32,
   pub repay_amt: u32,
@@ -61,6 +63,8 @@ impl Game {
     Game {
       location: Location::default(),
       inventory: inv,
+      prices: rand_prices(),
+      trades: [0; 7],
       cash: 2000,
       debt: 2000,
       repay_amt: 0,
@@ -83,6 +87,7 @@ impl Game {
       return;
     }
     self.location = location;
+    self.prices = rand_prices();
     self.days += 1;
     self.debt += (self.debt as f32 * INTEREST_RATE) as u32;
   }
@@ -102,15 +107,14 @@ impl Game {
   */
   pub fn buy(&mut self, drug: Drug, buy_amt: u32) {
     let price = match drug {
-      Drug::Weed => 40,
-      Drug::Cocaine => 50,
-      Drug::Meth => 75,
-      Drug::Heroin => 100,
-      Drug::Ecstasy => 30,
-      Drug::Lsd => 40,
-      Drug::Shrooms => 40,
+      Drug::Weed => self.prices[Drug::Weed as usize],
+      Drug::Cocaine => self.prices[Drug::Cocaine as usize],
+      Drug::Meth => self.prices[Drug::Meth as usize],
+      Drug::Heroin => self.prices[Drug::Heroin as usize],
+      Drug::Ecstasy => self.prices[Drug::Ecstasy as usize],
+      Drug::Lsd => self.prices[Drug::Lsd as usize],
+      Drug::Shrooms => self.prices[Drug::Shrooms as usize],
     };
-
     let entry = self.inventory.entry(drug).or_default();
     let (held_amt, _) = *entry;
     if self.cash >= price * buy_amt {
@@ -131,23 +135,22 @@ impl Game {
   */
   pub fn sell(&mut self, drug: Drug, sell_amt: u32) {
     let price = match drug {
-      Drug::Weed => 40,
-      Drug::Cocaine => 50,
-      Drug::Meth => 75,
-      Drug::Heroin => 100,
-      Drug::Ecstasy => 30,
-      Drug::Lsd => 40,
-      Drug::Shrooms => 40,
+      Drug::Weed => self.prices[Drug::Weed as usize],
+      Drug::Cocaine => self.prices[Drug::Cocaine as usize],
+      Drug::Meth => self.prices[Drug::Meth as usize],
+      Drug::Heroin => self.prices[Drug::Heroin as usize],
+      Drug::Ecstasy => self.prices[Drug::Ecstasy as usize],
+      Drug::Lsd => self.prices[Drug::Lsd as usize],
+      Drug::Shrooms => self.prices[Drug::Shrooms as usize],
     };
-
     let entry = self.inventory.entry(drug).or_default();
-    let (held_amt, _) = *entry;
+    let (held_amt, buy_price) = *entry;
     if held_amt >= sell_amt {
       self.cash += price * sell_amt;
       if held_amt - sell_amt == 0 {
         *entry = (0, 0);
       } else {
-        *entry = (held_amt - sell_amt, price);
+        *entry = (held_amt - sell_amt, buy_price);
       }
     }
   }

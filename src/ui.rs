@@ -1,8 +1,9 @@
-use eframe::egui::{self, Align, Button, Layout};
+use eframe::egui::{self, Align, Button, Layout, Widget};
 use egui_extras::Column;
 use hello_egui::flex::{Flex, item};
+use hello_egui::material_icons::icons;
 
-use crate::drugs::Drug;
+use crate::drugs::{Drug, get_drug_list};
 use crate::game::Game;
 use crate::locations::Location;
 
@@ -16,72 +17,71 @@ use crate::locations::Location;
  | ##|  #######| ##       |  ####/
  |__/ \_______/|__/        \___/
 */
+
+fn render_stats_header(game: &Game, ui: &mut egui::Ui) {
+  ui.horizontal(|ui| {
+    ui.with_layout(Layout::left_to_right(Align::TOP), |ui| {
+      ui.label(format!("Location: {}", game.location));
+    });
+    ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
+      ui.label(format!("Days: {}", game.days));
+    });
+  });
+
+  ui.separator();
+
+  ui.horizontal(|ui| {
+    ui.with_layout(Layout::left_to_right(Align::TOP), |ui| {
+      ui.label(format!("Cash: ${}", game.cash));
+    });
+    ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
+      ui.label(format!("Debt: ${}", game.debt));
+    });
+  });
+}
+
+fn render_inventory_table(game: &mut Game, ui: &mut egui::Ui) {
+  egui_extras::TableBuilder::new(ui)
+    .columns(Column::remainder(), 3)
+    .striped(true)
+    .header(14.0, |mut header| {
+      header.col(|ui| {
+        ui.label("Drug");
+      });
+      header.col(|ui| {
+        ui.label("Amount");
+      });
+      header.col(|ui| {
+        ui.label("Cost");
+      });
+    })
+    .body(|mut body| {
+      for drug in get_drug_list() {
+        let entry = game.inventory.entry(drug).or_default();
+        let (amt, cost) = *entry;
+        body.row(14.0, |mut row| {
+          row.col(|ui| {
+            ui.label(drug.to_string());
+          });
+          row.col(|ui| {
+            ui.label(amt.to_string());
+          });
+          row.col(|ui| {
+            ui.label(cost.to_string());
+          });
+        });
+      }
+    });
+}
+
 pub fn main_panel(game: &mut Game, ctx: &egui::Context) {
   egui::SidePanel::left("left_panel")
     .exact_width(ctx.screen_rect().width() / 2.0)
     .resizable(false)
     .show(ctx, |ui| {
-      ui.horizontal(|ui| {
-        ui.with_layout(Layout::left_to_right(Align::TOP), |ui| {
-          ui.label(format!("Location: {}", game.location));
-        });
-        ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
-          ui.label(format!("Days: {}", game.days));
-        });
-      });
-
+      render_stats_header(game, ui);
       ui.separator();
-
-      ui.horizontal(|ui| {
-        ui.with_layout(Layout::left_to_right(Align::TOP), |ui| {
-          ui.label(format!("Cash: ${}", game.cash));
-        });
-        ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
-          ui.label(format!("Debt: ${}", game.debt));
-        });
-      });
-
-      ui.separator();
-
-      egui_extras::TableBuilder::new(ui)
-        .columns(Column::remainder(), 3)
-        .striped(true)
-        .header(14.0, |mut header| {
-          header.col(|ui| {
-            ui.label("Drug");
-          });
-          header.col(|ui| {
-            ui.label("Amount");
-          });
-          header.col(|ui| {
-            ui.label("Buy Price");
-          });
-        })
-        .body(|mut body| {
-          for drug in [
-            Drug::Weed,
-            Drug::Cocaine,
-            Drug::Meth,
-            Drug::Heroin,
-            Drug::Ecstasy,
-            Drug::Lsd,
-            Drug::Shrooms,
-          ] {
-            let entry = game.inventory.entry(drug).or_default();
-            let (amt, cost) = *entry;
-            body.row(14.0, |mut row| {
-              row.col(|ui| {
-                ui.label(drug.to_string());
-              });
-              row.col(|ui| {
-                ui.label(amt.to_string());
-              });
-              row.col(|ui| {
-                ui.label(cost.to_string());
-              });
-            });
-          }
-        });
+      render_inventory_table(game, ui);
     });
 }
 
@@ -135,42 +135,75 @@ pub fn top_right_panel(game: &mut Game, ctx: &egui::Context) {
                                                    |  ######/
                                                     \______/
 */
+fn render_debt_repayment(game: &mut Game, ui: &mut egui::Ui) {
+  Flex::horizontal().show(ui, |flex| {
+    flex.add(
+      item(),
+      egui::Slider::new(&mut game.repay_amt, 0..=game.debt),
+    );
+    if flex.add(item(), Button::new("Repay")).clicked() {
+      game.pay_debt(game.repay_amt);
+    }
+  });
+}
+
+fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::TableRow) {
+  row.col(|ui| {
+    ui.label(drug.to_string());
+  });
+  row.col(|ui| {
+    ui.horizontal(|ui| {
+      ui.label(format!("${}", game.prices[drug as usize]));
+    });
+  });
+  row.col(|ui| {
+    ui.horizontal(|ui| {
+      if ui.button(icons::ICON_ADD).clicked()
+        && game.cash >= game.prices[drug as usize] * game.trades[drug as usize]
+      {
+        game.buy(drug, game.trades[drug as usize]);
+        game.trades[drug as usize] = 0;
+      }
+
+      egui::DragValue::new(&mut game.trades[drug as usize])
+        .range(0..=100)
+        .ui(ui);
+
+      if ui.button(icons::ICON_REMOVE).clicked() {
+        let entry = game.inventory.entry(drug).or_default();
+        let (amt, _) = *entry;
+        if amt >= game.trades[drug as usize] {
+          game.sell(drug, game.trades[drug as usize]);
+          game.trades[drug as usize] = 0;
+        }
+      }
+    });
+  });
+}
+
+fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
+  egui_extras::TableBuilder::new(ui)
+    .columns(Column::auto(), 3)
+    .body(|mut body| {
+      for drug in get_drug_list() {
+        body.row(14.0, |mut row| {
+          render_drug_trading_row(game, drug, &mut row);
+        });
+      }
+    });
+}
+
+// maybe move the debt repayment elswhere eventually,
+// probably somewhere near the debt display
+
 pub fn bottom_right_panel(game: &mut Game, ctx: &egui::Context) {
   egui::CentralPanel::default().show(ctx, |ui| {
     ui.with_layout(
       egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
       |ui| {
-        Flex::horizontal().show(ui, |flex| {
-          flex.add(
-            item(),
-            egui::Slider::new(&mut game.repay_amt, 0..=game.debt),
-          );
-          if flex.add(item(), Button::new("Repay")).clicked() {
-            game.pay_debt(game.repay_amt);
-          }
-        });
-
+        render_debt_repayment(game, ui);
         ui.separator();
-
-        for drug in [
-          Drug::Weed,
-          Drug::Cocaine,
-          Drug::Meth,
-          Drug::Heroin,
-          Drug::Ecstasy,
-          Drug::Lsd,
-          Drug::Shrooms,
-        ] {
-          ui.horizontal(|ui| {
-            ui.label(format!("{}: ", drug));
-            if ui.button("Buy").clicked() {
-              game.buy(drug, 1);
-            }
-            if ui.button("Sell").clicked() {
-              game.sell(drug, 1);
-            }
-          });
-        }
+        render_drug_trading_table(game, ui);
       },
     )
   });
