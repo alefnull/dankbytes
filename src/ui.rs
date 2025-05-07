@@ -167,6 +167,7 @@ fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::T
 
       egui::DragValue::new(&mut game.trades[drug as usize])
         .range(0..=100)
+        .speed(0.1)
         .ui(ui);
 
       if ui.button(icons::ICON_REMOVE).clicked() {
