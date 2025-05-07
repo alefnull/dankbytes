@@ -10,12 +10,15 @@ mod ui;
 
 fn main() -> Result<(), Error> {
   let game = game::Game::new();
+  let ico = eframe::icon_data::from_png_bytes(include_bytes!("../assets/leaf.png"))
+    .expect("Failed to load icon");
 
   eframe::run_native(
     "Dank Bytes",
     NativeOptions {
       viewport: ViewportBuilder::default()
         .with_inner_size(egui::vec2(640.0, 320.0))
+        .with_icon(ico)
         .with_resizable(false),
       centered: true,
       ..Default::default()
