@@ -18,7 +18,37 @@ use crate::locations::Location;
  |__/ \_______/|__/        \___/
 */
 
-fn render_stats_header(game: &Game, ui: &mut egui::Ui) {
+fn render_debt_repayment(game: &mut Game, ui: &mut egui::Ui) {
+  if game.debt == 0 {
+    ui.add_enabled_ui(false, |ui| {
+      Flex::horizontal().show(ui, |flex| {
+        flex.add(
+          item(),
+          egui::Slider::new(&mut game.repay_amt, 0..=100)
+            .trailing_fill(true)
+            .prefix("$")
+            .drag_value_speed(0.3),
+        );
+        flex.add(item(), Button::new("Repay"));
+      });
+    });
+  } else {
+    Flex::horizontal().show(ui, |flex| {
+      flex.add(
+        item(),
+        egui::Slider::new(&mut game.repay_amt, 0..=game.debt)
+          .trailing_fill(true)
+          .prefix("$")
+          .drag_value_speed(0.3),
+      );
+      if flex.add(item(), Button::new("Repay")).clicked() {
+        game.pay_debt(game.repay_amt);
+      }
+    });
+  }
+}
+
+fn render_stats_header(game: &mut Game, ui: &mut egui::Ui) {
   ui.horizontal(|ui| {
     ui.with_layout(Layout::left_to_right(Align::TOP), |ui| {
       ui.label(format!("Location: {}", game.location));
@@ -28,8 +58,6 @@ fn render_stats_header(game: &Game, ui: &mut egui::Ui) {
     });
   });
 
-  ui.separator();
-
   ui.horizontal(|ui| {
     ui.with_layout(Layout::left_to_right(Align::TOP), |ui| {
       ui.label(format!("Cash: ${}", game.cash));
@@ -38,6 +66,8 @@ fn render_stats_header(game: &Game, ui: &mut egui::Ui) {
       ui.label(format!("Debt: ${}", game.debt));
     });
   });
+
+  render_debt_repayment(game, ui);
 }
 
 fn render_inventory_table(game: &mut Game, ui: &mut egui::Ui) {
@@ -135,21 +165,6 @@ pub fn top_right_panel(game: &mut Game, ctx: &egui::Context) {
                                                    |  ######/
                                                     \______/
 */
-fn render_debt_repayment(game: &mut Game, ui: &mut egui::Ui) {
-  Flex::horizontal().show(ui, |flex| {
-    flex.add(
-      item(),
-      egui::Slider::new(&mut game.repay_amt, 0..=game.debt)
-        .trailing_fill(true)
-        .prefix("$")
-        .drag_value_speed(0.3),
-    );
-    if flex.add(item(), Button::new("Repay")).clicked() {
-      game.pay_debt(game.repay_amt);
-    }
-  });
-}
-
 fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::TableRow) {
   row.col(|ui| {
     ui.label(drug.to_string());
@@ -162,13 +177,13 @@ fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::T
   row.col(|ui| {
     ui.horizontal(|ui| {
       if ui.button(icons::ICON_ADD).clicked()
-        && game.cash >= game.prices[drug as usize] * game.trades[drug as usize]
+        && game.cash >= game.prices[drug as usize] * game.trade_amts[drug as usize]
       {
-        game.buy(drug, game.trades[drug as usize]);
-        game.trades[drug as usize] = 0;
+        game.buy(drug, game.trade_amts[drug as usize]);
+        // game.trade_amts[drug as usize] = 0;
       }
 
-      egui::DragValue::new(&mut game.trades[drug as usize])
+      egui::DragValue::new(&mut game.trade_amts[drug as usize])
         .range(0..=100)
         .speed(0.1)
         .ui(ui);
@@ -176,9 +191,9 @@ fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::T
       if ui.button(icons::ICON_REMOVE).clicked() {
         let entry = game.inventory.entry(drug).or_default();
         let (amt, _) = *entry;
-        if amt >= game.trades[drug as usize] {
-          game.sell(drug, game.trades[drug as usize]);
-          game.trades[drug as usize] = 0;
+        if amt >= game.trade_amts[drug as usize] {
+          game.sell(drug, game.trade_amts[drug as usize]);
+          // game.trade_amts[drug as usize] = 0;
         }
       }
     });
@@ -205,8 +220,6 @@ pub fn bottom_right_panel(game: &mut Game, ctx: &egui::Context) {
     ui.with_layout(
       egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
       |ui| {
-        render_debt_repayment(game, ui);
-        ui.separator();
         render_drug_trading_table(game, ui);
       },
     )

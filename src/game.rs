@@ -5,7 +5,7 @@ use crate::locations::*;
 use crate::ui::*;
 use eframe::{App, egui};
 
-const INTEREST_RATE: f32 = 0.05;
+const INTEREST_RATE: f32 = 0.01;
 
 /*
    /######  /######## /#######  /##   /##  /######  /########
@@ -22,7 +22,7 @@ pub struct Game {
   pub location: Location,
   pub inventory: HashMap<Drug, (u32, u32)>,
   pub prices: [u32; 7],
-  pub trades: [u32; 7],
+  pub trade_amts: [u32; 7],
   pub cash: u32,
   pub debt: u32,
   pub repay_amt: u32,
@@ -91,7 +91,7 @@ impl Game {
       location: Location::default(),
       inventory: inv,
       prices: rand_prices(),
-      trades: [0; 7],
+      trade_amts: [0; 7],
       cash: 2000,
       debt: 2000,
       repay_amt: 0,
@@ -144,7 +144,7 @@ impl Game {
     };
     let entry = self.inventory.entry(drug).or_default();
     let (held_amt, _) = *entry;
-    if self.cash >= price * buy_amt {
+    if buy_amt > 0 && self.cash >= price * buy_amt {
       self.cash -= price * buy_amt;
       *entry = (held_amt + buy_amt, price);
     }
@@ -172,7 +172,7 @@ impl Game {
     };
     let entry = self.inventory.entry(drug).or_default();
     let (held_amt, buy_price) = *entry;
-    if held_amt >= sell_amt {
+    if sell_amt > 0 && held_amt >= sell_amt {
       self.cash += price * sell_amt;
       if held_amt - sell_amt == 0 {
         *entry = (0, 0);
@@ -200,6 +200,7 @@ impl Game {
     if self.cash >= amount {
       self.cash -= amount;
       self.debt -= amount;
+      self.repay_amt = 0;
     }
   }
 }
