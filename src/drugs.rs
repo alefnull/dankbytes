@@ -1,18 +1,6 @@
 use rand::Rng;
 
-/*
-        /##
-       | ##
-   /#######  /######  /##   /##  /######   /#######
-  /##__  ## /##__  ##| ##  | ## /##__  ## /##_____/
- | ##  | ##| ##  \__/| ##  | ##| ##  \ ##|  ######
- | ##  | ##| ##      | ##  | ##| ##  | ## \____  ##
- |  #######| ##      |  ######/|  ####### /#######/
-  \_______/|__/       \______/  \____  ##|_______/
-                                /##  \ ##
-                               |  ######/
-                                \______/
-*/
+// MARK: price range constants
 pub const WEED_RANGE: (u32, u32) = (40, 80);
 pub const COCAINE_RANGE: (u32, u32) = (50, 90);
 pub const METH_RANGE: (u32, u32) = (80, 120);
@@ -21,6 +9,7 @@ pub const ECSTASY_RANGE: (u32, u32) = (30, 70);
 pub const LSD_RANGE: (u32, u32) = (40, 80);
 pub const SHROOMS_RANGE: (u32, u32) = (40, 80);
 
+// MARK: drug enum
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Drug {
   Weed,
@@ -32,6 +21,7 @@ pub enum Drug {
   Shrooms,
 }
 
+// MARK: drug display
 impl std::fmt::Display for Drug {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
@@ -46,6 +36,7 @@ impl std::fmt::Display for Drug {
   }
 }
 
+// MARK: get_drug_list()
 pub fn get_drug_list() -> [Drug; 7] {
   [
     Drug::Weed,
@@ -58,6 +49,7 @@ pub fn get_drug_list() -> [Drug; 7] {
   ]
 }
 
+// MARK: rand_prices()
 pub fn rand_prices() -> [u32; 7] {
   let mut rng = rand::rng();
   let mut prices = [0; 7];

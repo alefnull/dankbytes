@@ -7,17 +7,19 @@ use crate::drugs::{Drug, get_drug_list};
 use crate::game::Game;
 use crate::locations::Location;
 
-/*
-  /##            /######   /##
- | ##           /##__  ## | ##
- | ##  /###### | ##  \__//######
- | ## /##__  ##| ####   |_  ##_/
- | ##| ########| ##_/     | ##
- | ##| ##_____/| ##       | ## /##
- | ##|  #######| ##       |  ####/
- |__/ \_______/|__/        \___/
-*/
+// MARK: - main_panel()
+pub fn main_panel(game: &mut Game, ctx: &egui::Context) {
+  egui::SidePanel::left("left_panel")
+    .exact_width(ctx.screen_rect().width() / 2.0)
+    .resizable(false)
+    .show(ctx, |ui| {
+      render_stats_header(game, ui);
+      ui.separator();
+      render_inventory_table(game, ui);
+    });
+}
 
+// MARK: render_debt_repayment()
 fn render_debt_repayment(game: &mut Game, ui: &mut egui::Ui) {
   if game.debt == 0 {
     ui.add_enabled_ui(false, |ui| {
@@ -48,6 +50,7 @@ fn render_debt_repayment(game: &mut Game, ui: &mut egui::Ui) {
   }
 }
 
+// MARK: render_stats_header()
 fn render_stats_header(game: &mut Game, ui: &mut egui::Ui) {
   ui.horizontal(|ui| {
     ui.with_layout(Layout::left_to_right(Align::TOP), |ui| {
@@ -70,6 +73,7 @@ fn render_stats_header(game: &mut Game, ui: &mut egui::Ui) {
   render_debt_repayment(game, ui);
 }
 
+// MARK: render_inventory_table()
 fn render_inventory_table(game: &mut Game, ui: &mut egui::Ui) {
   egui_extras::TableBuilder::new(ui)
     .columns(Column::remainder(), 3)
@@ -104,30 +108,7 @@ fn render_inventory_table(game: &mut Game, ui: &mut egui::Ui) {
     });
 }
 
-pub fn main_panel(game: &mut Game, ctx: &egui::Context) {
-  egui::SidePanel::left("left_panel")
-    .exact_width(ctx.screen_rect().width() / 2.0)
-    .resizable(false)
-    .show(ctx, |ui| {
-      render_stats_header(game, ui);
-      ui.separator();
-      render_inventory_table(game, ui);
-    });
-}
-
-/*
-    /##                                         /##           /##         /##
-   | ##                                        |__/          | ##        | ##
-  /######    /######   /######         /######  /##  /###### | #######  /######
- |_  ##_/   /##__  ## /##__  ##       /##__  ##| ## /##__  ##| ##__  ##|_  ##_/
-   | ##    | ##  \ ##| ##  \ ##      | ##  \__/| ##| ##  \ ##| ##  \ ##  | ##
-   | ## /##| ##  | ##| ##  | ##      | ##      | ##| ##  | ##| ##  | ##  | ## /##
-   |  ####/|  ######/| #######/      | ##      | ##|  #######| ##  | ##  |  ####/
-    \___/   \______/ | ##____/       |__/      |__/ \____  ##|__/  |__/   \___/
-                     | ##                           /##  \ ##
-                     | ##                          |  ######/
-                     |__/                           \______/
-*/
+// MARK: - top_right_panel()
 pub fn top_right_panel(game: &mut Game, ctx: &egui::Context) {
   egui::TopBottomPanel::top("top_right_panel")
     .exact_height(ctx.screen_rect().height() / 2.0)
@@ -152,19 +133,19 @@ pub fn top_right_panel(game: &mut Game, ctx: &egui::Context) {
     });
 }
 
-/*
-  /##                   /##                     /##           /##         /##
- | ##                  | ##                    |__/          | ##        | ##
- | #######   /######  /######          /######  /##  /###### | #######  /######
- | ##__  ## /##__  ##|_  ##_/         /##__  ##| ## /##__  ##| ##__  ##|_  ##_/
- | ##  \ ##| ##  \ ##  | ##          | ##  \__/| ##| ##  \ ##| ##  \ ##  | ##
- | ##  | ##| ##  | ##  | ## /##      | ##      | ##| ##  | ##| ##  | ##  | ## /##
- | #######/|  ######/  |  ####/      | ##      | ##|  #######| ##  | ##  |  ####/
- |_______/  \______/    \___/        |__/      |__/ \____  ##|__/  |__/   \___/
-                                                    /##  \ ##
-                                                   |  ######/
-                                                    \______/
-*/
+// MARK: - bottom_right_panel()
+pub fn bottom_right_panel(game: &mut Game, ctx: &egui::Context) {
+  egui::CentralPanel::default().show(ctx, |ui| {
+    ui.with_layout(
+      egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
+      |ui| {
+        render_drug_trading_table(game, ui);
+      },
+    )
+  });
+}
+
+// MARK: render_drug_trading_row()
 fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::TableRow) {
   row.col(|ui| {
     ui.label(drug.to_string());
@@ -202,6 +183,7 @@ fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::T
   });
 }
 
+// MARK: render_drug_trading_table()
 fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
   egui_extras::TableBuilder::new(ui)
     .columns(Column::auto(), 3)
@@ -212,18 +194,4 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
         });
       }
     });
-}
-
-// maybe move the debt repayment elswhere eventually,
-// probably somewhere near the debt display
-
-pub fn bottom_right_panel(game: &mut Game, ctx: &egui::Context) {
-  egui::CentralPanel::default().show(ctx, |ui| {
-    ui.with_layout(
-      egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
-      |ui| {
-        render_drug_trading_table(game, ui);
-      },
-    )
-  });
 }
