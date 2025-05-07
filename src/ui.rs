@@ -139,7 +139,10 @@ fn render_debt_repayment(game: &mut Game, ui: &mut egui::Ui) {
   Flex::horizontal().show(ui, |flex| {
     flex.add(
       item(),
-      egui::Slider::new(&mut game.repay_amt, 0..=game.debt),
+      egui::Slider::new(&mut game.repay_amt, 0..=game.debt)
+        .trailing_fill(true)
+        .prefix("$")
+        .drag_value_speed(0.3),
     );
     if flex.add(item(), Button::new("Repay")).clicked() {
       game.pay_debt(game.repay_amt);
