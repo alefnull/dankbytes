@@ -7,9 +7,19 @@ use eframe::{App, egui};
 
 const INTEREST_RATE: f32 = 0.01;
 
+#[derive(Default, PartialEq, Eq, Clone, Copy)]
+pub enum GameLength {
+  #[default]
+  Short = 30,
+  Medium = 90,
+  Long = 180,
+}
+
 // MARK: - Game struct
 #[derive(Default)]
 pub struct Game {
+  pub init: bool,
+  pub game_over: bool,
   pub location: Location,
   pub inventory: HashMap<Drug, (u32, u32)>,
   pub prices: [u32; 7],
@@ -17,12 +27,33 @@ pub struct Game {
   pub cash: u32,
   pub debt: u32,
   pub repay_amt: u32,
+  pub game_length: GameLength,
   pub days: u32,
 }
 
 // MARK: App trait impl
 impl App for Game {
   fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    let mut init = self.init;
+    if init {
+      egui::Window::new("Game Init")
+        .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+        .resizable(false)
+        .title_bar(false)
+        .open(&mut init)
+        .show(ctx, |ui| {
+          ui.horizontal(|ui| {
+            ui.label("Game Length:");
+            ui.radio_value(&mut self.game_length, GameLength::Short, "Short");
+            ui.radio_value(&mut self.game_length, GameLength::Medium, "Medium");
+            ui.radio_value(&mut self.game_length, GameLength::Long, "Long");
+          });
+          if ui.button("Start").clicked() {
+            self.init = false;
+          }
+        });
+      return;
+    }
     egui::CentralPanel::default().show(ctx, |ui| {
       ui.with_layout(
         egui::Layout::left_to_right(egui::Align::Center).with_main_wrap(true),
@@ -52,6 +83,8 @@ impl Game {
       (Drug::Shrooms, (0, 0)),
     ]);
     Game {
+      init: true,
+      game_over: false,
       location: Location::default(),
       inventory: inv,
       prices: rand_prices(),
@@ -59,6 +92,7 @@ impl Game {
       cash: 2000,
       debt: 2000,
       repay_amt: 0,
+      game_length: GameLength::Short,
       days: 0,
     }
   }
@@ -68,9 +102,9 @@ impl Game {
     if self.location == location {
       return;
     }
+    self.days += 1;
     self.location = location;
     self.prices = rand_prices();
-    self.days += 1;
     self.debt += (self.debt as f32 * INTEREST_RATE) as u32;
   }
 

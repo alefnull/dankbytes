@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+
 use eframe::egui::{self, Align, Button, Layout, Widget};
 use egui_extras::Column;
 use hello_egui::flex::{Flex, item};
 // use hello_egui::material_icons::icons;
 
-use crate::drugs::{Drug, get_drug_list};
-use crate::game::Game;
+use crate::drugs::{Drug, get_drug_list, rand_prices};
+use crate::game::{Game, GameLength};
 use crate::locations::Location;
 
 // MARK: - main_panel()
@@ -136,6 +138,40 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
           render_drug_trading_table(game, ui);
         },
       );
+      if game.days + 1 >= game.game_length as u32 {
+        game.game_over = true;
+        let mut game_over = game.game_over;
+        egui::Window::new("Game Over")
+          .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+          .resizable(false)
+          .title_bar(false)
+          .open(&mut game_over)
+          .show(ctx, |ui| {
+            ui.label("Game Over! You have run out of time.");
+            if ui.button("OK").clicked() {
+              // self.init = true;
+              game.location = Location::default();
+              game.inventory = HashMap::from([
+                (Drug::Weed, (0, 0)),
+                (Drug::Cocaine, (0, 0)),
+                (Drug::Meth, (0, 0)),
+                (Drug::Heroin, (0, 0)),
+                (Drug::Ecstasy, (0, 0)),
+                (Drug::Lsd, (0, 0)),
+                (Drug::Shrooms, (0, 0)),
+              ]);
+              game.prices = rand_prices();
+              game.trade_amts = [0; 7];
+              game.cash = 2000;
+              game.debt = 2000;
+              game.repay_amt = 0;
+              game.game_length = GameLength::Short;
+              game.days = 0;
+              game.game_over = false;
+            }
+          });
+        // return;
+      }
     });
 }
 
