@@ -109,9 +109,9 @@ fn render_inventory_table(game: &mut Game, ui: &mut egui::Ui) {
 }
 
 // MARK: - top_right_panel()
-pub fn top_right_panel(game: &mut Game, ctx: &egui::Context) {
-  egui::TopBottomPanel::top("top_right_panel")
-    .exact_height(ctx.screen_rect().height() / 2.0)
+pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
+  egui::CentralPanel::default()
+    // .exact_height(ctx.screen_rect().height() / 2.0)
     .show(ctx, |ui| {
       Flex::horizontal().wrap(true).show(ui, |flex| {
         for loc in [
@@ -130,20 +130,26 @@ pub fn top_right_panel(game: &mut Game, ctx: &egui::Context) {
           }
         }
       });
+      ui.with_layout(
+        egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
+        |ui| {
+          render_drug_trading_table(game, ui);
+        },
+      );
     });
 }
 
 // MARK: - bottom_right_panel()
-pub fn bottom_right_panel(game: &mut Game, ctx: &egui::Context) {
-  egui::CentralPanel::default().show(ctx, |ui| {
-    ui.with_layout(
-      egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
-      |ui| {
-        render_drug_trading_table(game, ui);
-      },
-    )
-  });
-}
+// pub fn bottom_right_panel(game: &mut Game, ctx: &egui::Context) {
+//   egui::CentralPanel::default().show(ctx, |ui| {
+//     ui.with_layout(
+//       egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
+//       |ui| {
+//         render_drug_trading_table(game, ui);
+//       },
+//     )
+//   });
+// }
 
 // MARK: render_drug_trading_row()
 fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::TableRow) {

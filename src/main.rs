@@ -1,5 +1,6 @@
-use eframe::egui::ViewportBuilder;
-use eframe::{Error, NativeOptions, Result}; //, egui};
+#![windows_subsystem = "windows"]
+use eframe::egui::{self, ViewportBuilder};
+use eframe::{Error, NativeOptions, Result};
 use hello_egui::material_icons;
 
 mod drugs;
@@ -14,7 +15,7 @@ fn main() -> Result<(), Error> {
     "Dank Bytes",
     NativeOptions {
       viewport: ViewportBuilder::default()
-        // .with_inner_size(egui::vec2(800.0, 600.0))
+        .with_inner_size(egui::vec2(640.0, 320.0))
         .with_resizable(false),
       centered: true,
       ..Default::default()

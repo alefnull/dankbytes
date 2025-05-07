@@ -26,12 +26,12 @@ impl App for Game {
     egui::CentralPanel::default().show(ctx, |ui| {
       ui.with_layout(
         egui::Layout::left_to_right(egui::Align::Center).with_main_wrap(true),
-        |ui| {
+        |_| {
           main_panel(self, ctx);
-          ui.vertical(|_ui| {
-            top_right_panel(self, ctx);
-            bottom_right_panel(self, ctx);
-          });
+          // ui.vertical(|_ui| {
+          right_panel(self, ctx);
+          // bottom_right_panel(self, ctx);
+          // });
         },
       )
     });
