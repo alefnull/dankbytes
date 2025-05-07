@@ -38,7 +38,7 @@ impl App for Game {
   }
 }
 
-// MARK: - Game struct impl
+// MARK: - Game impl
 impl Game {
   // MARK: Game::new()
   pub fn new() -> Game {

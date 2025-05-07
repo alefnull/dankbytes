@@ -2,7 +2,9 @@
 
 ## About ##
 
-A sloppy clone of an old Windows game called "Dope Wars"
+A sloppy WIP clone of an old Windows game called "Dope Wars"
+
+![dank bytes WIP screenshot](assets/dankshot-WIP.png)
 
 ## License ##
 
