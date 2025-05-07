@@ -1,7 +1,7 @@
 use eframe::egui::{self, Align, Button, Layout, Widget};
 use egui_extras::Column;
 use hello_egui::flex::{Flex, item};
-use hello_egui::material_icons::icons;
+// use hello_egui::material_icons::icons;
 
 use crate::drugs::{Drug, get_drug_list};
 use crate::game::Game;
@@ -176,7 +176,8 @@ fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::T
   });
   row.col(|ui| {
     ui.horizontal(|ui| {
-      if ui.button(icons::ICON_ADD).clicked()
+      // if ui.button(icons::ICON_ADD).clicked()
+      if ui.button("Buy").clicked()
         && game.cash >= game.prices[drug as usize] * game.trade_amts[drug as usize]
       {
         game.buy(drug, game.trade_amts[drug as usize]);
@@ -188,7 +189,8 @@ fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::T
         .speed(0.1)
         .ui(ui);
 
-      if ui.button(icons::ICON_REMOVE).clicked() {
+      // if ui.button(icons::ICON_REMOVE).clicked() {
+      if ui.button("Sell").clicked() {
         let entry = game.inventory.entry(drug).or_default();
         let (amt, _) = *entry;
         if amt >= game.trade_amts[drug as usize] {
