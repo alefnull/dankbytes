@@ -138,7 +138,7 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
           render_drug_trading_table(game, ui);
         },
       );
-      if game.days + 1 >= game.game_length as u32 {
+      if game.days >= game.game_length as u32 {
         game.game_over = true;
         let mut game_over = game.game_over;
         egui::Window::new("Game Over")
