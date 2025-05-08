@@ -248,7 +248,7 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
           row.col(|ui| {
             ui.horizontal(|ui| {
               ui.separator();
-              let max_buy = (game.cash / game.prices[drug as usize]).min(1000);
+              let max_buy = game.cash / game.prices[drug as usize];
               egui::DragValue::new(&mut game.buy_amts[drug as usize])
                 .range(0..=max_buy)
                 // .speed(0.1)
