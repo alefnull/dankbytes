@@ -4,7 +4,7 @@ use crate::drugs::{Drug, get_rand_drug};
 pub enum EventType {
   DrugBust,
   DrugShipment,
-  COUNT, // Placeholder for the number of event types
+  Count,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -7,7 +7,7 @@ use crate::ui::*;
 use eframe::{App, egui};
 use rand::Rng;
 
-const INTEREST_RATE: f32 = 0.01;
+const INTEREST_RATE: f32 = 0.015;
 
 #[derive(Default, PartialEq, Eq, Clone, Copy)]
 pub enum GameLength {
@@ -83,10 +83,7 @@ impl Game {
     self.debt += (self.debt as f32 * INTEREST_RATE) as u32;
 
     if rand::rng().random_range(0.0..1.0) < 0.05 {
-      // self.event = Some(Event::drug_bust(&mut self.prices));
-      // pick a random event type from all available events
-      // keeping it expandable for future added event types
-      let event_type = rand::rng().random_range(0..EventType::COUNT as usize);
+      let event_type = rand::rng().random_range(0..EventType::Count as usize);
       self.event = match event_type {
         0 => Some(Event::drug_bust(&mut self.prices)),
         1 => Some(Event::drug_shipment(&mut self.prices)),
