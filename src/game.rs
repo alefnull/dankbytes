@@ -106,7 +106,7 @@ impl Game {
   }
 
   // MARK: Game::repay_debt()
-  pub fn pay_debt(&mut self, amount: u32) {
+  pub fn repay_debt(&mut self, amount: u32) {
     let amount = std::cmp::min(amount, self.debt);
     if self.cash >= amount {
       self.cash -= amount;

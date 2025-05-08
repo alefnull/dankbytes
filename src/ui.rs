@@ -74,7 +74,7 @@ fn render_debt_repayment(game: &mut Game, ui: &mut egui::Ui) {
           .drag_value_speed(0.3),
       );
       if ui.button("Repay").clicked() {
-        game.pay_debt(game.repay_amt);
+        game.repay_debt(game.repay_amt);
       }
     });
   });
