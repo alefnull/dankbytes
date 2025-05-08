@@ -1,5 +1,6 @@
 use eframe::egui::{self, Align, Button, Layout, Widget};
 use egui_extras::Column;
+use thousands::Separable;
 
 use crate::drugs::get_drug_list;
 use crate::game::{Game, GameLength};
@@ -94,10 +95,10 @@ fn render_stats_header(game: &mut Game, ui: &mut egui::Ui) {
 
   ui.horizontal(|ui| {
     ui.with_layout(Layout::left_to_right(Align::TOP), |ui| {
-      ui.label(format!("Cash: ${}", game.cash));
+      ui.label(format!("Cash: ${}", game.cash.separate_with_commas()));
     });
     ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
-      ui.label(format!("Debt: ${}", game.debt));
+      ui.label(format!("Debt: ${}", game.debt.separate_with_commas()));
     });
   });
 

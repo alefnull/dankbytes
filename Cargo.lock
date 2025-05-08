@@ -723,6 +723,7 @@ dependencies = [
  "eframe",
  "egui_extras",
  "rand 0.9.1",
+ "thousands",
  "winres",
 ]
 
@@ -2868,6 +2869,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "thousands"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3bf63baf9f5039dadc247375c29eb13706706cfde997d0330d05aa63a77d8820"
 
 [[package]]
 name = "tiff"
