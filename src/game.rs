@@ -35,49 +35,7 @@ pub struct Game {
 // MARK: App trait impl
 impl App for Game {
   fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-    let mut init = self.init;
-    egui::CentralPanel::default().show(ctx, |ui| {
-      if init {
-        egui::Window::new("Game Init")
-          .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
-          .resizable(false)
-          .title_bar(false)
-          .open(&mut init)
-          .show(ctx, |ui| {
-            ui.horizontal(|ui| {
-              ui.label("Game Length:");
-              ui.radio_value(&mut self.game_length, GameLength::Short, "Short");
-              ui.radio_value(&mut self.game_length, GameLength::Medium, "Medium");
-              ui.radio_value(&mut self.game_length, GameLength::Long, "Long");
-            });
-            if ui.button("Start").clicked() {
-              self.init = false;
-            }
-          });
-        return;
-      }
-      ui.with_layout(
-        egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
-        |ui| {
-          egui::TopBottomPanel::bottom("bottom_panel")
-            .resizable(false)
-            .exact_height(80.0)
-            .show(ctx, |ui| {
-              ui.horizontal(|ui| ui.label("BOTTOM_BAR"));
-            });
-          ui.with_layout(
-            egui::Layout::left_to_right(egui::Align::Center).with_main_wrap(true),
-            |_| {
-              main_panel(self, ctx);
-              // ui.vertical(|_ui| {
-              right_panel(self, ctx);
-              // bottom_right_panel(self, ctx);
-              // });
-            },
-          );
-        },
-      );
-    });
+    render_window(self, ctx);
   }
 }
 
