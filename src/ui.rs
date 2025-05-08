@@ -34,12 +34,18 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
     ui.with_layout(
       egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
       |ui| {
+        // MARK: bottom bar
         egui::TopBottomPanel::bottom("bottom_panel")
           .resizable(false)
           .exact_height(80.0)
           .show(ctx, |ui| {
-            ui.horizontal(|ui| ui.label("BOTTOM_BAR"));
+            if game.event.is_some() {
+              ui.horizontal(|ui| {
+                ui.label(game.event.as_ref().unwrap().e_msg.clone());
+              });
+            }
           });
+        // MARK: main section
         ui.with_layout(
           egui::Layout::left_to_right(egui::Align::Center).with_main_wrap(true),
           |_| {
@@ -208,18 +214,26 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
     .body(|mut body| {
       for drug in get_drug_list() {
         body.row(14.0, |mut row| {
+          // MARK: drug name
           row.col(|ui| {
             ui.label(drug.to_string());
           });
+          // MARK: drug price
           row.col(|ui| {
             ui.horizontal(|ui| {
-              ui.label(format!("${}", game.prices[drug as usize]));
+              if game.event.as_ref().is_some_and(|e| e.e_drug == drug) {
+                ui.visuals_mut().override_text_color = Some(egui::Color32::from_rgb(20, 120, 20));
+                ui.label(format!("${}", game.prices[drug as usize]));
+                ui.reset_style();
+              } else {
+                ui.label(format!("${}", game.prices[drug as usize]));
+              }
             });
           });
+          // MARK: buy section
           row.col(|ui| {
             ui.horizontal(|ui| {
               ui.separator();
-              // MARK: buy section
               let max_buy = (game.cash / game.prices[drug as usize]).min(1000);
               egui::DragValue::new(&mut game.buy_amts[drug as usize])
                 .range(0..=max_buy)
@@ -233,16 +247,15 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
               }
             });
           });
+          // MARK: sell section
           row.col(|ui| {
             ui.horizontal(|ui| {
               ui.separator();
-              // MARK: sell section
               let total_inv_amt = game.inventory.entry(drug).or_default().0;
               egui::DragValue::new(&mut game.sell_amts[drug as usize])
                 .range(0..=total_inv_amt)
                 .speed(0.1)
                 .ui(ui);
-
               if ui.button("Sell").clicked() {
                 let entry = game.inventory.entry(drug).or_default();
                 let (amt, _) = *entry;

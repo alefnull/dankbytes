@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
 use crate::drugs::*;
+use crate::events::Event;
 use crate::locations::*;
 use crate::ui::*;
 use eframe::{App, egui};
+use rand::Rng;
 
 const INTEREST_RATE: f32 = 0.01;
 
@@ -16,7 +18,7 @@ pub enum GameLength {
 }
 
 // MARK: - Game struct
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Game {
   pub init: bool,
   pub game_over: bool,
@@ -30,6 +32,7 @@ pub struct Game {
   pub cash: u32,
   pub debt: u32,
   pub repay_amt: u32,
+  pub event: Option<Event>,
 }
 
 // MARK: App trait impl
@@ -57,7 +60,7 @@ impl Game {
       game_over: false,
       location: Location::default(),
       inventory: inv,
-      prices: rand_prices(),
+      prices: get_rand_prices(),
       buy_amts: [0; 7],
       sell_amts: [0; 7],
       cash: 2000,
@@ -65,6 +68,7 @@ impl Game {
       repay_amt: 0,
       game_length: GameLength::Short,
       days: 0,
+      event: None,
     }
   }
 
@@ -75,8 +79,14 @@ impl Game {
     }
     self.days += 1;
     self.location = location;
-    self.prices = rand_prices();
+    self.prices = get_rand_prices();
     self.debt += (self.debt as f32 * INTEREST_RATE) as u32;
+
+    if rand::rng().random_range(0.0..1.0) < 0.2 {
+      self.event = Some(Event::police_bust(&mut self.prices));
+    } else {
+      self.event = None;
+    }
   }
 
   // MARK: Game::buy()

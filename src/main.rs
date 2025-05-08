@@ -1,8 +1,9 @@
 #![windows_subsystem = "windows"]
-use eframe::egui::{self, ViewportBuilder};
 use eframe::{Error, NativeOptions, Result};
+use eframe::egui::{self, ViewportBuilder};
 
 mod drugs;
+mod events;
 mod game;
 mod locations;
 mod ui;

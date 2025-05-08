@@ -51,18 +51,26 @@ pub fn get_drug_list() -> [Drug; 7] {
 
 pub fn get_drug_price(drug: Drug, prices: &[u32; 7]) -> u32 {
   match drug {
-    Drug::Weed => prices[0],
-    Drug::Cocaine => prices[1],
-    Drug::Meth => prices[2],
-    Drug::Heroin => prices[3],
-    Drug::Ecstasy => prices[4],
-    Drug::Lsd => prices[5],
-    Drug::Shrooms => prices[6],
+    Drug::Weed => prices[Drug::Weed as usize],
+    Drug::Cocaine => prices[Drug::Cocaine as usize],
+    Drug::Meth => prices[Drug::Meth as usize],
+    Drug::Heroin => prices[Drug::Heroin as usize],
+    Drug::Ecstasy => prices[Drug::Ecstasy as usize],
+    Drug::Lsd => prices[Drug::Lsd as usize],
+    Drug::Shrooms => prices[Drug::Shrooms as usize],
   }
 }
 
-// MARK: rand_prices()
-pub fn rand_prices() -> [u32; 7] {
+// MARK: get_rand_drug()
+pub fn get_rand_drug() -> Drug {
+  let mut rng = rand::rng();
+  let drugs = get_drug_list();
+  let rand_index = rng.random_range(0..drugs.len());
+  drugs[rand_index]
+}
+
+// MARK: get_rand_prices()
+pub fn get_rand_prices() -> [u32; 7] {
   let mut rng = rand::rng();
   let mut prices = [0; 7];
 
