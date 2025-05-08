@@ -14,6 +14,7 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
       egui::Window::new("Game Init")
         .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
         .title_bar(false)
+        .resizable(false)
         .open(&mut init)
         .show(ctx, |ui| {
           ui.horizontal(|ui| {
@@ -218,7 +219,7 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
             ui.horizontal(|ui| {
               ui.separator();
               // MARK: buy section
-              let max_buy = game.cash / game.prices[drug as usize];
+              let max_buy = (game.cash / game.prices[drug as usize]).min(1000);
               egui::DragValue::new(&mut game.buy_amts[drug as usize])
                 .range(0..=max_buy)
                 .speed(0.1)
@@ -227,6 +228,7 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
                 && game.cash >= game.prices[drug as usize] * game.buy_amts[drug as usize]
               {
                 game.buy(drug, game.buy_amts[drug as usize]);
+                game.buy_amts[drug as usize] = 0;
               }
             });
           });
