@@ -161,7 +161,7 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
                 (Drug::Shrooms, (0, 0)),
               ]);
               game.prices = rand_prices();
-              game.trade_amts = [0; 7];
+              game.buy_amts = [0; 7];
               game.cash = 2000;
               game.debt = 2000;
               game.repay_amt = 0;
@@ -199,15 +199,22 @@ fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::T
   });
   row.col(|ui| {
     ui.horizontal(|ui| {
+      ui.separator();
+      egui::DragValue::new(&mut game.buy_amts[drug as usize])
+        .range(0..=100)
+        .speed(0.1)
+        .ui(ui);
+
       // if ui.button(icons::ICON_ADD).clicked()
       if ui.button("Buy").clicked()
-        && game.cash >= game.prices[drug as usize] * game.trade_amts[drug as usize]
+        && game.cash >= game.prices[drug as usize] * game.buy_amts[drug as usize]
       {
-        game.buy(drug, game.trade_amts[drug as usize]);
+        game.buy(drug, game.buy_amts[drug as usize]);
         // game.trade_amts[drug as usize] = 0;
       }
 
-      egui::DragValue::new(&mut game.trade_amts[drug as usize])
+      ui.separator();
+      egui::DragValue::new(&mut game.sell_amts[drug as usize])
         .range(0..=100)
         .speed(0.1)
         .ui(ui);
@@ -216,8 +223,8 @@ fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::T
       if ui.button("Sell").clicked() {
         let entry = game.inventory.entry(drug).or_default();
         let (amt, _) = *entry;
-        if amt >= game.trade_amts[drug as usize] {
-          game.sell(drug, game.trade_amts[drug as usize]);
+        if amt >= game.buy_amts[drug as usize] {
+          game.sell(drug, game.buy_amts[drug as usize]);
           // game.trade_amts[drug as usize] = 0;
         }
       }
