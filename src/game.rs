@@ -81,15 +81,7 @@ impl Game {
 
   // MARK: Game::buy()
   pub fn buy(&mut self, drug: Drug, buy_amt: u32) {
-    let price = match drug {
-      Drug::Weed => self.prices[Drug::Weed as usize],
-      Drug::Cocaine => self.prices[Drug::Cocaine as usize],
-      Drug::Meth => self.prices[Drug::Meth as usize],
-      Drug::Heroin => self.prices[Drug::Heroin as usize],
-      Drug::Ecstasy => self.prices[Drug::Ecstasy as usize],
-      Drug::Lsd => self.prices[Drug::Lsd as usize],
-      Drug::Shrooms => self.prices[Drug::Shrooms as usize],
-    };
+    let price = get_drug_price(drug);
     let entry = self.inventory.entry(drug).or_default();
     let (held_amt, _) = *entry;
     if buy_amt > 0 && self.cash >= price * buy_amt {
@@ -100,15 +92,7 @@ impl Game {
 
   // MARK: Game::sell()
   pub fn sell(&mut self, drug: Drug, sell_amt: u32) {
-    let price = match drug {
-      Drug::Weed => self.prices[Drug::Weed as usize],
-      Drug::Cocaine => self.prices[Drug::Cocaine as usize],
-      Drug::Meth => self.prices[Drug::Meth as usize],
-      Drug::Heroin => self.prices[Drug::Heroin as usize],
-      Drug::Ecstasy => self.prices[Drug::Ecstasy as usize],
-      Drug::Lsd => self.prices[Drug::Lsd as usize],
-      Drug::Shrooms => self.prices[Drug::Shrooms as usize],
-    };
+    let price = get_drug_price(drug);
     let entry = self.inventory.entry(drug).or_default();
     let (held_amt, buy_price) = *entry;
     if sell_amt > 0 && held_amt >= sell_amt {

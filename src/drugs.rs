@@ -49,6 +49,18 @@ pub fn get_drug_list() -> [Drug; 7] {
   ]
 }
 
+pub fn get_drug_price(drug: Drug) -> u32 {
+  match drug {
+    Drug::Weed => WEED_RANGE.0,
+    Drug::Cocaine => COCAINE_RANGE.0,
+    Drug::Meth => METH_RANGE.0,
+    Drug::Heroin => HEROIN_RANGE.0,
+    Drug::Ecstasy => ECSTASY_RANGE.0,
+    Drug::Lsd => LSD_RANGE.0,
+    Drug::Shrooms => SHROOMS_RANGE.0,
+  }
+}
+
 // MARK: rand_prices()
 pub fn rand_prices() -> [u32; 7] {
   let mut rng = rand::rng();
