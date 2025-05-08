@@ -9,10 +9,12 @@ use crate::drugs::{Drug, get_drug_list, rand_prices};
 use crate::game::{Game, GameLength};
 use crate::locations::Location;
 
+// MARK: - render_window()
 pub fn render_window(game: &mut Game, ctx: &egui::Context) {
   let mut init = game.init;
   egui::CentralPanel::default().show(ctx, |ui| {
     if init {
+      // MARK: game init window
       egui::Window::new("Game Init")
         .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
         .resizable(false)
@@ -161,6 +163,7 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
   egui::CentralPanel::default()
     // .exact_height(ctx.screen_rect().height() / 2.0)
     .show(ctx, |ui| {
+      // MARK: travel section
       Flex::horizontal().wrap(true).show(ui, |flex| {
         for loc in [
           Location::Fairfield,
@@ -178,12 +181,14 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
           }
         }
       });
+      // MARK: trading section
       ui.with_layout(
         egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
         |ui| {
           render_drug_trading_table(game, ui);
         },
       );
+      // MARK: game over section
       if game.days >= game.game_length as u32 {
         game.game_over = true;
         let mut game_over = game.game_over;
@@ -216,22 +221,9 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
               game.game_over = false;
             }
           });
-        // return;
       }
     });
 }
-
-// MARK: - bottom_right_panel()
-// pub fn bottom_right_panel(game: &mut Game, ctx: &egui::Context) {
-//   egui::CentralPanel::default().show(ctx, |ui| {
-//     ui.with_layout(
-//       egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
-//       |ui| {
-//         render_drug_trading_table(game, ui);
-//       },
-//     )
-//   });
-// }
 
 // MARK: render_drug_trading_row()
 fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::TableRow) {
@@ -246,8 +238,9 @@ fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::T
   row.col(|ui| {
     ui.horizontal(|ui| {
       ui.separator();
+      let max_buy = game.cash / game.prices[drug as usize];
       egui::DragValue::new(&mut game.buy_amts[drug as usize])
-        .range(0..=100)
+        .range(0..=max_buy)
         .speed(0.1)
         .ui(ui);
 
@@ -260,8 +253,9 @@ fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::T
       }
 
       ui.separator();
+      let total_inv_amt = game.inventory.entry(drug).or_default().0;
       egui::DragValue::new(&mut game.sell_amts[drug as usize])
-        .range(0..=100)
+        .range(0..=total_inv_amt)
         .speed(0.1)
         .ui(ui);
 
@@ -269,8 +263,8 @@ fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::T
       if ui.button("Sell").clicked() {
         let entry = game.inventory.entry(drug).or_default();
         let (amt, _) = *entry;
-        if amt >= game.buy_amts[drug as usize] {
-          game.sell(drug, game.buy_amts[drug as usize]);
+        if amt >= game.sell_amts[drug as usize] {
+          game.sell(drug, game.sell_amts[drug as usize]);
           // game.trade_amts[drug as usize] = 0;
         }
       }
