@@ -1,7 +1,6 @@
 #![windows_subsystem = "windows"]
 use eframe::egui::{self, ViewportBuilder};
 use eframe::{Error, NativeOptions, Result};
-use hello_egui::material_icons;
 
 mod drugs;
 mod game;
@@ -25,7 +24,6 @@ fn main() -> Result<(), Error> {
       ..Default::default()
     },
     Box::new(|cc| {
-      material_icons::initialize(&cc.egui_ctx);
       cc.egui_ctx.set_pixels_per_point(1.4);
       Ok(Box::new(game))
     }),
