@@ -10,8 +10,9 @@ pub const LSD_RANGE: (u32, u32) = (40, 80);
 pub const SHROOMS_RANGE: (u32, u32) = (40, 80);
 
 // MARK: drug enum
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Drug {
+  #[default]
   Weed,
   Cocaine,
   Meth,

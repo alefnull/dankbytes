@@ -229,7 +229,11 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
           // MARK: drug price
           row.col(|ui| {
             ui.horizontal(|ui| {
-              if game.event.as_ref().is_some_and(|e| e.e_drug == drug) {
+              if game
+                .event
+                .as_ref()
+                .is_some_and(|e| e.e_drugs.contains(&drug))
+              {
                 // ui.visuals_mut().override_text_color = Some(egui::Color32::from_rgb(20, 120, 20));
                 let col = match game.event.as_ref().unwrap().e_type {
                   events::EventType::DrugBust => egui::Color32::from_rgb(200, 20, 20),

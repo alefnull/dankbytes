@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
 use crate::drugs::*;
-use crate::events::{Event, EventType};
+use crate::events::{Event, generate_event};
 use crate::locations::*;
 use crate::ui::*;
 use eframe::{App, egui};
-use rand::Rng;
 
 const INTEREST_RATE: f32 = 0.015;
 
@@ -82,13 +81,8 @@ impl Game {
     self.prices = get_rand_prices();
     self.debt += (self.debt as f32 * INTEREST_RATE) as u32;
 
-    if rand::rng().random_range(0.0..1.0) < 0.05 {
-      let event_type = rand::rng().random_range(0..EventType::Count as usize);
-      self.event = match event_type {
-        0 => Some(Event::drug_bust(&mut self.prices)),
-        1 => Some(Event::drug_shipment(&mut self.prices)),
-        _ => None,
-      };
+    if let Some(event) = generate_event(&mut self.prices) {
+      self.event = Some(event);
     } else {
       self.event = None;
     }
