@@ -162,13 +162,17 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
           Location::Centerville,
         ] {
           if flex
-            .add(item().grow(1.0), Button::new(loc.to_string()))
+            .add(
+              item().grow(0.5),
+              Button::new(loc.to_string()).min_size(egui::vec2(80.0, 22.0)),
+            )
             .clicked()
           {
             game.travel(loc);
           }
         }
       });
+      ui.separator();
       // MARK: trading section
       ui.with_layout(
         egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
