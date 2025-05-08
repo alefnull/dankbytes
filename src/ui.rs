@@ -1,11 +1,9 @@
-use std::collections::HashMap;
-
 use eframe::egui::{self, Align, Button, Layout, Widget};
 use egui_extras::Column;
 use hello_egui::flex::{Flex, item};
 // use hello_egui::material_icons::icons;
 
-use crate::drugs::{Drug, get_drug_list, rand_prices};
+use crate::drugs::get_drug_list;
 use crate::game::{Game, GameLength};
 use crate::locations::Location;
 
@@ -33,6 +31,7 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
         });
       return;
     }
+    // MARK: main game window
     ui.with_layout(
       egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
       |ui| {
@@ -71,33 +70,22 @@ pub fn main_panel(game: &mut Game, ctx: &egui::Context) {
 
 // MARK: render_debt_repayment()
 fn render_debt_repayment(game: &mut Game, ui: &mut egui::Ui) {
-  if game.debt == 0 {
-    ui.add_enabled_ui(false, |ui| {
-      Flex::horizontal().show(ui, |flex| {
-        flex.add(
-          item(),
-          egui::Slider::new(&mut game.repay_amt, 0..=100)
-            .trailing_fill(true)
-            .prefix("$")
-            .drag_value_speed(0.3),
-        );
-        flex.add(item(), Button::new("Repay"));
-      });
-    });
-  } else {
+  ui.add_enabled_ui(game.debt != 0, |ui| {
     Flex::horizontal().show(ui, |flex| {
+      let max_repay = if game.debt > 0 { game.debt } else { 1 };
       flex.add(
         item(),
-        egui::Slider::new(&mut game.repay_amt, 0..=game.debt)
+        egui::Slider::new(&mut game.repay_amt, 0..=max_repay)
           .trailing_fill(true)
           .prefix("$")
           .drag_value_speed(0.3),
       );
+      // flex.add(item(), Button::new("Repay"));
       if flex.add(item(), Button::new("Repay")).clicked() {
         game.pay_debt(game.repay_amt);
       }
     });
-  }
+  });
 }
 
 // MARK: render_stats_header()
@@ -200,76 +188,11 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
           .show(ctx, |ui| {
             ui.label("Game Over! You have run out of time.");
             if ui.button("OK").clicked() {
-              // self.init = true;
-              game.location = Location::default();
-              game.inventory = HashMap::from([
-                (Drug::Weed, (0, 0)),
-                (Drug::Cocaine, (0, 0)),
-                (Drug::Meth, (0, 0)),
-                (Drug::Heroin, (0, 0)),
-                (Drug::Ecstasy, (0, 0)),
-                (Drug::Lsd, (0, 0)),
-                (Drug::Shrooms, (0, 0)),
-              ]);
-              game.prices = rand_prices();
-              game.buy_amts = [0; 7];
-              game.cash = 2000;
-              game.debt = 2000;
-              game.repay_amt = 0;
-              game.game_length = GameLength::Short;
-              game.days = 0;
-              game.game_over = false;
+              *game = Game::new();
             }
           });
       }
     });
-}
-
-// MARK: render_drug_trading_row()
-fn render_drug_trading_row(game: &mut Game, drug: Drug, row: &mut egui_extras::TableRow) {
-  row.col(|ui| {
-    ui.label(drug.to_string());
-  });
-  row.col(|ui| {
-    ui.horizontal(|ui| {
-      ui.label(format!("${}", game.prices[drug as usize]));
-    });
-  });
-  row.col(|ui| {
-    ui.horizontal(|ui| {
-      ui.separator();
-      let max_buy = game.cash / game.prices[drug as usize];
-      egui::DragValue::new(&mut game.buy_amts[drug as usize])
-        .range(0..=max_buy)
-        .speed(0.1)
-        .ui(ui);
-
-      // if ui.button(icons::ICON_ADD).clicked()
-      if ui.button("Buy").clicked()
-        && game.cash >= game.prices[drug as usize] * game.buy_amts[drug as usize]
-      {
-        game.buy(drug, game.buy_amts[drug as usize]);
-        // game.trade_amts[drug as usize] = 0;
-      }
-
-      ui.separator();
-      let total_inv_amt = game.inventory.entry(drug).or_default().0;
-      egui::DragValue::new(&mut game.sell_amts[drug as usize])
-        .range(0..=total_inv_amt)
-        .speed(0.1)
-        .ui(ui);
-
-      // if ui.button(icons::ICON_REMOVE).clicked() {
-      if ui.button("Sell").clicked() {
-        let entry = game.inventory.entry(drug).or_default();
-        let (amt, _) = *entry;
-        if amt >= game.sell_amts[drug as usize] {
-          game.sell(drug, game.sell_amts[drug as usize]);
-          // game.trade_amts[drug as usize] = 0;
-        }
-      }
-    });
-  });
 }
 
 // MARK: render_drug_trading_table()
@@ -279,7 +202,45 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
     .body(|mut body| {
       for drug in get_drug_list() {
         body.row(14.0, |mut row| {
-          render_drug_trading_row(game, drug, &mut row);
+          row.col(|ui| {
+            ui.label(drug.to_string());
+          });
+          row.col(|ui| {
+            ui.horizontal(|ui| {
+              ui.label(format!("${}", game.prices[drug as usize]));
+            });
+          });
+          row.col(|ui| {
+            ui.horizontal(|ui| {
+              ui.separator();
+              // MARK: buy section
+              let max_buy = game.cash / game.prices[drug as usize];
+              egui::DragValue::new(&mut game.buy_amts[drug as usize])
+                .range(0..=max_buy)
+                .speed(0.1)
+                .ui(ui);
+              if ui.button("Buy").clicked()
+                && game.cash >= game.prices[drug as usize] * game.buy_amts[drug as usize]
+              {
+                game.buy(drug, game.buy_amts[drug as usize]);
+              }
+              ui.separator();
+              // MARK: sell section
+              let total_inv_amt = game.inventory.entry(drug).or_default().0;
+              egui::DragValue::new(&mut game.sell_amts[drug as usize])
+                .range(0..=total_inv_amt)
+                .speed(0.1)
+                .ui(ui);
+
+              if ui.button("Sell").clicked() {
+                let entry = game.inventory.entry(drug).or_default();
+                let (amt, _) = *entry;
+                if amt >= game.sell_amts[drug as usize] {
+                  game.sell(drug, game.sell_amts[drug as usize]);
+                }
+              }
+            });
+          });
         });
       }
     });
