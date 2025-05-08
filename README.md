@@ -11,6 +11,7 @@ A sloppy WIP Rust 'clone' of an old game i played back on Windows 98 or XP, call
 eframe = "0.31.1"
 egui_extras = "0.31.1"
 rand = "0.9.1"
+thousands = "0.2.0"
 ```
 
 ## License ##
