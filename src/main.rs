@@ -8,10 +8,11 @@ mod game;
 mod locations;
 mod ui;
 
+const LEAF_PNG: &[u8] = include_bytes!("../assets/leaf.png");
+
 fn main() -> Result<(), Error> {
   let game = game::Game::new();
-  let ico = eframe::icon_data::from_png_bytes(include_bytes!("../assets/leaf.png"))
-    .expect("Failed to load icon");
+  let ico = eframe::icon_data::from_png_bytes(LEAF_PNG).expect("Failed to load icon");
 
   eframe::run_native(
     "Dank Bytes",
