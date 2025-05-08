@@ -49,15 +49,15 @@ pub fn get_drug_list() -> [Drug; 7] {
   ]
 }
 
-pub fn get_drug_price(drug: Drug) -> u32 {
+pub fn get_drug_price(drug: Drug, prices: &[u32; 7]) -> u32 {
   match drug {
-    Drug::Weed => WEED_RANGE.0,
-    Drug::Cocaine => COCAINE_RANGE.0,
-    Drug::Meth => METH_RANGE.0,
-    Drug::Heroin => HEROIN_RANGE.0,
-    Drug::Ecstasy => ECSTASY_RANGE.0,
-    Drug::Lsd => LSD_RANGE.0,
-    Drug::Shrooms => SHROOMS_RANGE.0,
+    Drug::Weed => prices[0],
+    Drug::Cocaine => prices[1],
+    Drug::Meth => prices[2],
+    Drug::Heroin => prices[3],
+    Drug::Ecstasy => prices[4],
+    Drug::Lsd => prices[5],
+    Drug::Shrooms => prices[6],
   }
 }
 
