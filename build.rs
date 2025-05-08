@@ -4,10 +4,7 @@ fn main() {
     res
       .set_icon("./assets/leaf.ico")
       .set("FileVersion", "0.0.1")
-      .set("ProductName", "Dank Bytes")
-      .set("CompanyName", "alefnull")
-      .set("FileDescription", ":/");
-    // Add more metadata as needed
+      .set("ProductName", "Dank Bytes");
 
     if let Err(e) = res.compile() {
       panic!("Failed to compile resources: {}", e);
