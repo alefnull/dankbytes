@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::drugs::*;
-use crate::events::Event;
+use crate::events::{Event, EventType};
 use crate::locations::*;
 use crate::ui::*;
 use eframe::{App, egui};
@@ -13,8 +13,8 @@ const INTEREST_RATE: f32 = 0.01;
 pub enum GameLength {
   #[default]
   Short = 30,
-  Medium = 90,
-  Long = 180,
+  Medium = 180,
+  Long = 360,
 }
 
 // MARK: - Game struct
@@ -23,7 +23,7 @@ pub struct Game {
   pub init: bool,
   pub game_over: bool,
   pub game_length: GameLength,
-  pub days: u32,
+  pub days_left: u32,
   pub location: Location,
   pub inventory: HashMap<Drug, (u32, u32)>,
   pub prices: [u32; 7],
@@ -67,7 +67,7 @@ impl Game {
       debt: 2000,
       repay_amt: 0,
       game_length: GameLength::Short,
-      days: 0,
+      days_left: GameLength::Short as u32,
       event: None,
     }
   }
@@ -77,13 +77,21 @@ impl Game {
     if self.location == location {
       return;
     }
-    self.days += 1;
+    self.days_left = self.days_left.saturating_sub(1);
     self.location = location;
     self.prices = get_rand_prices();
     self.debt += (self.debt as f32 * INTEREST_RATE) as u32;
 
-    if rand::rng().random_range(0.0..1.0) < 0.2 {
-      self.event = Some(Event::police_bust(&mut self.prices));
+    if rand::rng().random_range(0.0..1.0) < 0.05 {
+      // self.event = Some(Event::drug_bust(&mut self.prices));
+      // pick a random event type from all available events
+      // keeping it expandable for future added event types
+      let event_type = rand::rng().random_range(0..EventType::COUNT as usize);
+      self.event = match event_type {
+        0 => Some(Event::drug_bust(&mut self.prices)),
+        1 => Some(Event::drug_shipment(&mut self.prices)),
+        _ => None,
+      };
     } else {
       self.event = None;
     }

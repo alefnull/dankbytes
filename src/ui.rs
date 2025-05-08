@@ -3,6 +3,7 @@ use egui_extras::Column;
 use thousands::Separable;
 
 use crate::drugs::get_drug_list;
+use crate::events;
 use crate::game::{Game, GameLength};
 use crate::locations::Location;
 
@@ -20,41 +21,64 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
         .show(ctx, |ui| {
           ui.horizontal(|ui| {
             ui.label("Game Length:");
-            ui.radio_value(&mut game.game_length, GameLength::Short, "Short");
-            ui.radio_value(&mut game.game_length, GameLength::Medium, "Medium");
-            ui.radio_value(&mut game.game_length, GameLength::Long, "Long");
+            ui.radio_value(&mut game.game_length, GameLength::Short, "One Month");
+            ui.radio_value(&mut game.game_length, GameLength::Medium, "Six Months");
+            ui.radio_value(&mut game.game_length, GameLength::Long, "One Year");
           });
           if ui.button("Start").clicked() {
+            game.days_left = match game.game_length {
+              GameLength::Short => 30,
+              GameLength::Medium => 180,
+              GameLength::Long => 360,
+            };
             game.init = false;
           }
         });
       return;
     }
     // MARK: main game window
-    ui.with_layout(
-      egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
-      |ui| {
-        // MARK: bottom bar
-        egui::TopBottomPanel::bottom("bottom_panel")
-          .resizable(false)
-          .exact_height(80.0)
-          .show(ctx, |ui| {
-            if game.event.is_some() {
-              ui.horizontal(|ui| {
-                ui.label(game.event.as_ref().unwrap().e_msg.clone());
-              });
-            }
-          });
-        // MARK: main section
-        ui.with_layout(
-          egui::Layout::left_to_right(egui::Align::Center).with_main_wrap(true),
-          |_| {
-            main_panel(game, ctx);
-            right_panel(game, ctx);
-          },
-        );
-      },
-    );
+    ui.add_enabled_ui(!game.game_over, |ui| {
+      ui.with_layout(
+        egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
+        |ui| {
+          // MARK: bottom bar
+          egui::TopBottomPanel::bottom("bottom_panel")
+            .resizable(false)
+            .exact_height(80.0)
+            .show(ctx, |ui| {
+              if game.event.is_some() {
+                ui.horizontal(|ui| {
+                  ui.label(game.event.as_ref().unwrap().e_msg.clone());
+                });
+              }
+            });
+          // MARK: main section
+          ui.with_layout(
+            egui::Layout::left_to_right(egui::Align::Center).with_main_wrap(true),
+            |_| {
+              main_panel(game, ctx);
+              right_panel(game, ctx);
+            },
+          );
+        },
+      );
+    });
+    // MARK: game over section
+    if game.days_left == 0 {
+      game.game_over = true;
+      let mut game_over = game.game_over;
+      egui::Window::new("Game Over")
+        .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+        .resizable(false)
+        .title_bar(false)
+        .open(&mut game_over)
+        .show(ctx, |ui| {
+          ui.label("Game Over! You have run out of time.");
+          if ui.button("OK").clicked() {
+            *game = Game::new();
+          }
+        });
+    }
   });
 }
 
@@ -95,7 +119,7 @@ fn render_stats_header(game: &mut Game, ui: &mut egui::Ui) {
       ui.label(format!("Location: {}", game.location));
     });
     ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
-      ui.label(format!("Days: {}", game.days));
+      ui.label(format!("Days Left: {}", game.days_left));
     });
   });
 
@@ -188,22 +212,6 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
         render_drug_trading_table(game, ui);
       },
     );
-    // MARK: game over section
-    if game.days >= game.game_length as u32 {
-      game.game_over = true;
-      let mut game_over = game.game_over;
-      egui::Window::new("Game Over")
-        .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
-        .resizable(false)
-        .title_bar(false)
-        .open(&mut game_over)
-        .show(ctx, |ui| {
-          ui.label("Game Over! You have run out of time.");
-          if ui.button("OK").clicked() {
-            *game = Game::new();
-          }
-        });
-    }
   });
 }
 
@@ -222,7 +230,13 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
           row.col(|ui| {
             ui.horizontal(|ui| {
               if game.event.as_ref().is_some_and(|e| e.e_drug == drug) {
-                ui.visuals_mut().override_text_color = Some(egui::Color32::from_rgb(20, 120, 20));
+                // ui.visuals_mut().override_text_color = Some(egui::Color32::from_rgb(20, 120, 20));
+                let col = match game.event.as_ref().unwrap().e_type {
+                  events::EventType::DrugBust => egui::Color32::from_rgb(200, 20, 20),
+                  events::EventType::DrugShipment => egui::Color32::from_rgb(20, 200, 20),
+                  _ => egui::Color32::default(),
+                };
+                ui.visuals_mut().override_text_color = Some(col);
                 ui.label(format!("${}", game.prices[drug as usize]));
                 ui.reset_style();
               } else {
@@ -237,7 +251,7 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
               let max_buy = (game.cash / game.prices[drug as usize]).min(1000);
               egui::DragValue::new(&mut game.buy_amts[drug as usize])
                 .range(0..=max_buy)
-                .speed(0.1)
+                // .speed(0.1)
                 .ui(ui);
               if ui.button("Buy").clicked()
                 && game.cash >= game.prices[drug as usize] * game.buy_amts[drug as usize]
@@ -254,7 +268,7 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
               let total_inv_amt = game.inventory.entry(drug).or_default().0;
               egui::DragValue::new(&mut game.sell_amts[drug as usize])
                 .range(0..=total_inv_amt)
-                .speed(0.1)
+                // .speed(0.1)
                 .ui(ui);
               if ui.button("Sell").clicked() {
                 let entry = game.inventory.entry(drug).or_default();
