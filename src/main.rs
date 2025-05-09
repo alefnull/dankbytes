@@ -5,6 +5,7 @@ use eframe::{Error, NativeOptions, Result};
 mod drugs;
 mod events;
 mod game;
+mod inventory;
 mod locations;
 mod ui;
 

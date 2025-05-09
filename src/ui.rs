@@ -153,8 +153,8 @@ fn render_inventory_table(game: &mut Game, ui: &mut egui::Ui) {
     })
     .body(|mut body| {
       for drug in get_drug_list() {
-        let entry = game.inventory.entry(drug).or_default();
-        let (amt, cost) = *entry;
+        let amt = game.inventory.get_amount(drug).unwrap_or(0);
+        let cost = game.inventory.get_cost(drug).unwrap_or(0);
         body.row(14.0, |mut row| {
           row.col(|ui| {
             ui.label(drug.to_string());
@@ -269,14 +269,13 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
           row.col(|ui| {
             ui.horizontal(|ui| {
               ui.separator();
-              let total_inv_amt = game.inventory.entry(drug).or_default().0;
+              let total_inv_amt = game.inventory.get_amount(drug).unwrap_or(0);
               egui::DragValue::new(&mut game.sell_amts[drug as usize])
                 .range(0..=total_inv_amt)
                 // .speed(0.1)
                 .ui(ui);
               if ui.button("Sell").clicked() {
-                let entry = game.inventory.entry(drug).or_default();
-                let (amt, _) = *entry;
+                let amt = game.inventory.get_amount(drug).unwrap_or(0);
                 if amt >= game.sell_amts[drug as usize] {
                   game.sell(drug, game.sell_amts[drug as usize]);
                   game.sell_amts[drug as usize] = 0;

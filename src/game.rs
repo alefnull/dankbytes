@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use eframe::{App, egui};
 
 use crate::drugs::*;
 use crate::events::{Event, generate_event};
+use crate::inventory::Inventory;
 use crate::locations::*;
 use crate::ui::*;
-use eframe::{App, egui};
 
 const INTEREST_RATE: f32 = 0.015;
 
@@ -24,7 +24,7 @@ pub struct Game {
   pub game_length: GameLength,
   pub days_left: u32,
   pub location: Location,
-  pub inventory: HashMap<Drug, (u32, u32)>,
+  pub inventory: Inventory,
   pub prices: [u32; 7],
   pub buy_amts: [u32; 7],
   pub sell_amts: [u32; 7],
@@ -45,20 +45,11 @@ impl App for Game {
 impl Game {
   // MARK: Game::new()
   pub fn new() -> Game {
-    let inv = HashMap::from([
-      (Drug::Weed, (0, 0)),
-      (Drug::Cocaine, (0, 0)),
-      (Drug::Meth, (0, 0)),
-      (Drug::Heroin, (0, 0)),
-      (Drug::Ecstasy, (0, 0)),
-      (Drug::Lsd, (0, 0)),
-      (Drug::Shrooms, (0, 0)),
-    ]);
     Game {
       init: true,
       game_over: false,
       location: Location::default(),
-      inventory: inv,
+      inventory: Inventory::default(),
       prices: get_rand_prices(),
       buy_amts: [0; 7],
       sell_amts: [0; 7],
@@ -91,25 +82,20 @@ impl Game {
   // MARK: Game::buy()
   pub fn buy(&mut self, drug: Drug, buy_amt: u32) {
     let price = get_drug_price(drug, &self.prices);
-    let entry = self.inventory.entry(drug).or_default();
-    let (held_amt, _) = *entry;
     if buy_amt > 0 && self.cash >= price * buy_amt {
       self.cash -= price * buy_amt;
-      *entry = (held_amt + buy_amt, price);
+      self.inventory.add(drug, buy_amt, price);
     }
   }
 
   // MARK: Game::sell()
   pub fn sell(&mut self, drug: Drug, sell_amt: u32) {
     let price = get_drug_price(drug, &self.prices);
-    let entry = self.inventory.entry(drug).or_default();
-    let (held_amt, buy_price) = *entry;
-    if sell_amt > 0 && held_amt >= sell_amt {
+    if sell_amt > 0 && self.inventory.get_amount(drug).unwrap_or(0) >= sell_amt {
       self.cash += price * sell_amt;
-      if held_amt - sell_amt == 0 {
-        *entry = (0, 0);
-      } else {
-        *entry = (held_amt - sell_amt, buy_price);
+      self.inventory.remove(drug, sell_amt).unwrap();
+      if self.inventory.get_amount(drug).unwrap_or(0) == 0 {
+        self.inventory.reset_cost(drug);
       }
     }
   }

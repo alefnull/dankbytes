@@ -1,8 +1,10 @@
+use core::ops::AddAssign;
 use std::collections::HashMap;
 
 use rand::Rng;
 
-use crate::drugs::{self, Drug, get_rand_drug};
+use crate::drugs::{Drug, get_rand_drug};
+use crate::inventory::Inventory;
 
 const EVENT_CHANCE: f32 = 0.1;
 const BUSTED_DRUGS_MIN: usize = 1;
@@ -10,6 +12,7 @@ const BUSTED_DRUGS_MAX: usize = 3;
 const MUGGING_DRUGS_MIN: usize = 1;
 const MUGGING_DRUGS_MAX: usize = 5;
 
+// MARK: EventType
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub enum EventType {
   #[default]
@@ -19,6 +22,7 @@ pub enum EventType {
   Count, // #types-1
 }
 
+// MARK: - Event struct
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Event {
   pub e_type: EventType,
@@ -27,15 +31,18 @@ pub struct Event {
 }
 
 impl Event {
+  // MARK: Event::drug_bust()
   pub fn drug_bust(prices: &mut [u32; 7]) -> Self {
     let mut rng = rand::rng();
     let busted_amt = rng.random_range(BUSTED_DRUGS_MIN..=BUSTED_DRUGS_MAX);
     let mut busted_drugs = Vec::new();
+
     for _ in 0..busted_amt {
       let drug = get_rand_drug();
-      let entry = prices.get_mut(drug as usize).unwrap();
-      *entry = (*entry + (*entry / 2)) as u32; // Increase price by 50%
-      busted_drugs.push(drug);
+      if let Some(price) = prices.get_mut(drug as usize) {
+        *price += *price / 2; // increase price by 50%
+        busted_drugs.push(drug);
+      }
     }
 
     Self {
@@ -45,10 +52,12 @@ impl Event {
     }
   }
 
+  // MARK: Event::drug_shipment()
   pub fn drug_shipment(prices: &mut [u32; 7]) -> Self {
     let drug = get_rand_drug();
-    let entry = prices.get_mut(drug as usize).unwrap();
-    *entry = (*entry - (*entry / 2)) as u32; // Decrease price by 50%
+    if let Some(price) = prices.get_mut(drug as usize) {
+      *price = (*price / 2).max(1); // decrease price by 50%, but ensure it's at least 1
+    }
 
     Self {
       e_type: EventType::DrugShipment,
@@ -60,44 +69,56 @@ impl Event {
     }
   }
 
-  pub fn mugging(inv: &mut HashMap<drugs::Drug, (u32, u32)>) -> Self {
+  // MARK: Event::mugging()
+  pub fn mugging(held_inv: &mut Inventory, held_cash: &mut u32) -> Self {
     let mut rng = rand::rng();
-    let num_drugs = rng.random_range(MUGGING_DRUGS_MIN..=MUGGING_DRUGS_MAX);
-    let mut mugged_drugs = Vec::new();
     let mut mugged_map = HashMap::new();
-    for _ in 0..num_drugs {
-      let drug = get_rand_drug();
-      let entry = inv.get(&drug);
-      if let Some((amt, _)) = entry {
-        if *amt > 0 {
-          let mugged_amt = rng.random_range(1..=*amt);
-          mugged_map.insert(drug, mugged_amt);
-          let new_amt = amt - mugged_amt;
-          if new_amt == 0 {
-            inv.remove(&drug);
-          } else {
-            inv.insert(drug, (new_amt, entry.unwrap().1));
-          }
-        }
+
+    (0..rng.random_range(MUGGING_DRUGS_MIN..=MUGGING_DRUGS_MAX)).for_each(|_| {
+      if let Some(held_amt) = held_inv.get_amount(get_rand_drug()).filter(|&amt| amt > 0) {
+        let drug = get_rand_drug();
+        let mugged_amt = rng.random_range(1..=held_amt);
+        mugged_map.entry(drug).or_insert(0).add_assign(mugged_amt);
+        held_inv.remove(drug, mugged_amt).unwrap_or_default();
       }
-    }
-    if mugged_map.is_empty() {
-      return Self::default();
-    }
-    let mut list = String::new();
-    for (drug, count) in mugged_map.iter() {
-      list.push_str(&format!("{} {},", count, drug));
-      mugged_drugs.push(*drug);
-    }
-    list.pop(); // remove last comma
+    });
+
+    let cash_taken = if rng.random::<f32>() < 0.5 {
+      rng.random_range(1..=(*held_cash / 2))
+    } else {
+      0
+    };
+    *held_cash = held_cash.saturating_sub(cash_taken);
+
+    let e_msg = if mugged_map.is_empty() {
+      "You were mugged, but they found nothing to take!".to_string()
+    } else {
+      let list = mugged_map
+        .iter()
+        .map(|(drug, count)| format!("{} {}", count, drug))
+        .collect::<Vec<_>>()
+        .join(", ");
+
+      format!(
+        "You were mugged! They took {}{}",
+        list,
+        if cash_taken > 0 {
+          format!(" and ${}!", cash_taken)
+        } else {
+          "!".to_string()
+        }
+      )
+    };
+
     Self {
       e_type: EventType::Mugging,
-      e_msg: format!("You were mugged! They took {}!", list),
-      e_drugs: mugged_drugs,
+      e_msg,
+      e_drugs: mugged_map.keys().cloned().collect(),
     }
   }
 }
 
+// MARK: generate_event()
 pub fn generate_event(game: &mut crate::game::Game) -> Option<Event> {
   let rand_num = rand::random::<f32>();
   if rand_num < EVENT_CHANCE {
@@ -105,7 +126,7 @@ pub fn generate_event(game: &mut crate::game::Game) -> Option<Event> {
     let event = match event_type {
       0 => Event::drug_bust(&mut game.prices),
       1 => Event::drug_shipment(&mut game.prices),
-      2 => Event::mugging(&mut game.inventory),
+      2 => Event::mugging(&mut game.inventory, &mut game.cash),
       _ => Event::default(),
     };
     Some(event)
