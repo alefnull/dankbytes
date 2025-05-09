@@ -5,11 +5,11 @@
   &nbsp;
   <img src="https://img.shields.io/github/actions/workflow/status/alefnull/dankbytes/ci.yaml?branch=main" alt="CI Status">
   &nbsp;
-  <a href="https://github.com/alefnull/dankbytes/releases/latest">
+  <a href="https://github.com/alefnull/dankbytes/releases/latest" style="text-decoration: none">
     <img src="https://img.shields.io/github/v/release/alefnull/dankbytes" alt="Release">
   </a>
   &nbsp;
-  <a href="https://github.com/alefnull/dankbytes/releases/tag/dev-latest">
+  <a href="https://github.com/alefnull/dankbytes/releases/tag/dev-latest" style="text-decoration: none">
     <img src="https://img.shields.io/badge/dev-dev--latest-blue" alt="Development Build">
   </a>
 </p>
