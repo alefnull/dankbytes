@@ -2,10 +2,13 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/license/alefnull/dankbytes" alt="License">
+  &nbsp;
   <img src="https://img.shields.io/github/actions/workflow/status/alefnull/dankbytes/ci.yaml?branch=main" alt="CI Status">
+  &nbsp;
   <a href="https://github.com/alefnull/dankbytes/releases/latest">
     <img src="https://img.shields.io/github/v/release/alefnull/dankbytes" alt="Release">
   </a>
+  &nbsp;
   <a href="https://github.com/alefnull/dankbytes/releases/tag/dev-latest">
     <img src="https://img.shields.io/badge/dev-dev--latest-blue" alt="Development Build">
   </a>
