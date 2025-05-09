@@ -279,6 +279,7 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
                 let (amt, _) = *entry;
                 if amt >= game.sell_amts[drug as usize] {
                   game.sell(drug, game.sell_amts[drug as usize]);
+                  game.sell_amts[drug as usize] = 0;
                 }
               }
             });

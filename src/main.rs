@@ -1,6 +1,6 @@
 #![windows_subsystem = "windows"]
-use eframe::{Error, NativeOptions, Result};
 use eframe::egui::{self, ViewportBuilder};
+use eframe::{Error, NativeOptions, Result};
 
 mod drugs;
 mod events;
