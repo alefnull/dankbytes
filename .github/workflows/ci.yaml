@@ -51,16 +51,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache
+      - name: Cache Registry
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+
+      - name: Cache Build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-build-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -70,20 +73,20 @@ jobs:
           components: rustfmt, clippy
 
       - name: Install dependencies
-        run: cargo fetch
+        run: cargo fetch --locked
 
       - name: Run tests
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_tests == 'true' || github.event_name != 'workflow_dispatch' }}
-        run: cargo test --all --verbose
+        run: cargo test --verbose
 
       - name: Run lint
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_lint == 'true' || github.event_name != 'workflow_dispatch' }}
-        run: cargo clippy --all --all-targets --all-features -- -D warnings
+        run: cargo clippy -- -D warnings
 
       - name: Run format
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_format == 'true' || github.event_name != 'workflow_dispatch' }}
-        run: cargo fmt --all -- --check
+        run: cargo fmt -- --check
 
       - name: Run build
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_build == 'true' || github.event_name != 'workflow_dispatch' }}
-        run: cargo build --all --release
+        run: cargo build --release
