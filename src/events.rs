@@ -16,7 +16,7 @@ pub enum EventType {
   DrugBust,
   DrugShipment,
   Mugging,
-  Count,
+  Count, // #types-1
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
