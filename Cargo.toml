@@ -5,7 +5,6 @@ description = "A sloppy recreation of the old 'Dope Wars' game"
 categories = ["games", "gui", "simulation"]
 keywords = ["game", "trading", "simulation", "egui", "dopewars"]
 license = "MIT"
-license-file = "LICENSE"
 readme = "README.md"
 version = "0.0.1"
 edition = "2024"
