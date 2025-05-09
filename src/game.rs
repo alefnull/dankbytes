@@ -81,7 +81,7 @@ impl Game {
     self.prices = get_rand_prices();
     self.debt += (self.debt as f32 * INTEREST_RATE) as u32;
 
-    if let Some(event) = generate_event(&mut self.prices) {
+    if let Some(event) = generate_event(self) {
       self.event = Some(event);
     } else {
       self.event = None;
