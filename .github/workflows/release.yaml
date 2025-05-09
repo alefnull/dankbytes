@@ -4,7 +4,17 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'Cargo.toml'  # Only trigger on Cargo.toml changes
+      - 'Cargo.toml'
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: 'Force release creation for current version'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: write
 
 jobs:
   check-version:
@@ -24,7 +34,8 @@ jobs:
       - name: Check if tag exists
         id: check-tag
         run: |
-          if ! git ls-remote --tags origin | grep -q "refs/tags/v${{ steps.get-version.outputs.version }}"; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.force_release }}" == "true" ]] || \
+             ! git ls-remote --tags origin | grep -q "refs/tags/v${{ steps.get-version.outputs.version }}"; then
             echo "should_release=true" >> $GITHUB_OUTPUT
           else
             echo "should_release=false" >> $GITHUB_OUTPUT
