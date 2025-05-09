@@ -53,12 +53,15 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             binary: dankbytes.exe
+            simple_target: x86_64-windows
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             binary: dankbytes
+            simple_target: x86_64-linux
           - os: macos-latest
             target: x86_64-apple-darwin
             binary: dankbytes
+            simple_target: x86_64-macos
 
     steps:
       - uses: actions/checkout@v4
@@ -98,16 +101,16 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          7z a ../../../dankbytes-${{ needs.check-version.outputs.version }}-${{ matrix.target }}.zip ${{ matrix.binary }}
+          7z a ../../../dankbytes-${{ needs.check-version.outputs.version }}-${{ matrix.simple_target }}.zip ${{ matrix.binary }}
 
       - name: Package Binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          tar czf ../../../dankbytes-${{ needs.check-version.outputs.version }}-${{ matrix.target }}.tar.gz ${{ matrix.binary }}
+          tar czf ../../../dankbytes-${{ needs.check-version.outputs.version }}-${{ matrix.simple_target }}.tar.gz ${{ matrix.binary }}
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.check-version.outputs.version }}
-          files: dankbytes-${{ needs.check-version.outputs.version }}-${{ matrix.target }}.*
+          files: dankbytes-${{ needs.check-version.outputs.version }}-${{ matrix.simple_target }}.*
