@@ -1,8 +1,21 @@
 [package]
 name = "dankbytes"
+authors = ["alefnull"]
+description = "A sloppy recreation of the old 'Dope Wars' game"
+categories = ["games", "gui", "simulation"]
+keywords = ["game", "trading", "simulation", "egui", "dopewars"]
+license = "MIT"
+license-file = "LICENSE"
+readme = "README.md"
 version = "0.0.1"
 edition = "2024"
 build = "build.rs"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
 
 [build-dependencies]
 winres = "0.1.12"
