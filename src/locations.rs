@@ -1,5 +1,5 @@
 // MARK: Location enum
-#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum Location {
   #[default]
   Fairfield,

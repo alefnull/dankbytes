@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 // MARK: Inventory Errors
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum InventoryError {
   InsufficientAmount,
   DrugNotFound,
@@ -66,6 +66,10 @@ impl Inventory {
     if let Some((_, cost)) = self.items.get_mut(&drug) {
       cost.0 = 0;
     }
+  }
+
+  pub fn has_items(&self) -> bool {
+    self.items.values().any(|(amount, _)| amount.get() > 0)
   }
 }
 

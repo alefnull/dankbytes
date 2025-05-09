@@ -25,6 +25,7 @@ pub enum Drug {
 }
 
 impl Drug {
+  /// MARK: drug as_index()
   pub fn as_index(&self) -> usize {
     *self as usize
   }
@@ -53,6 +54,7 @@ pub fn get_drug_list() -> [Drug; 7] {
   ]
 }
 
+// MARK: get_drug_price()
 pub fn get_drug_price(drug: Drug, prices: &[u32; 7]) -> u32 {
   prices[drug.as_index()]
 }

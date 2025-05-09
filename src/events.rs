@@ -72,8 +72,23 @@ impl Event {
   // MARK: Event::mugging()
   pub fn mugging(held_inv: &mut Inventory, held_cash: &mut u32) -> Self {
     let mut rng = rand::rng();
-    let mut mugged_map = HashMap::new();
+    let mugged_map = steal_drugs(held_inv, &mut rng);
+    let cash_taken = steal_cash(held_cash, &mut rng);
+    let e_msg = create_mugging_message(&mugged_map, cash_taken);
 
+    Self {
+      e_type: EventType::Mugging,
+      e_msg,
+      e_drugs: mugged_map.keys().cloned().collect(),
+    }
+  }
+}
+
+// MARK: - steal_drugs() [helper]
+fn steal_drugs(held_inv: &mut Inventory, rng: &mut impl Rng) -> HashMap<Drug, u32> {
+  let mut mugged_map = HashMap::new();
+
+  if held_inv.has_items() {
     (0..rng.random_range(MUGGING_DRUGS_MIN..=MUGGING_DRUGS_MAX)).for_each(|_| {
       if let Some(held_amt) = held_inv.get_amount(get_rand_drug()).filter(|&amt| amt > 0) {
         let drug = get_rand_drug();
@@ -82,17 +97,27 @@ impl Event {
         held_inv.remove(drug, mugged_amt).unwrap_or_default();
       }
     });
+  }
 
-    let cash_taken = if rng.random::<f32>() < 0.5 {
-      rng.random_range(1..=(*held_cash / 2))
-    } else {
-      0
-    };
+  mugged_map
+}
+
+// MARK: - steal_cash() [helper]
+fn steal_cash(held_cash: &mut u32, rng: &mut impl Rng) -> u32 {
+  if rng.random::<f32>() < 0.5 {
+    let cash_taken = rng.random_range(1..=(*held_cash / 2));
     *held_cash = held_cash.saturating_sub(cash_taken);
+    cash_taken
+  } else {
+    0
+  }
+}
 
-    let e_msg = if mugged_map.is_empty() {
-      "You were mugged, but they found nothing to take!".to_string()
-    } else {
+// MARK: - create_mugging_message() [helper]
+fn create_mugging_message(mugged_map: &HashMap<Drug, u32>, cash_taken: u32) -> String {
+  match (mugged_map.is_empty(), cash_taken) {
+    (true, 0) => "You were mugged, but they found nothing to take!".to_string(),
+    _ => {
       let list = mugged_map
         .iter()
         .map(|(drug, count)| format!("{} {}", count, drug))
@@ -108,12 +133,6 @@ impl Event {
           "!".to_string()
         }
       )
-    };
-
-    Self {
-      e_type: EventType::Mugging,
-      e_msg,
-      e_drugs: mugged_map.keys().cloned().collect(),
     }
   }
 }

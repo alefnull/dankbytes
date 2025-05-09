@@ -75,7 +75,7 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
         .show(ctx, |ui| {
           ui.label("Game Over! You have run out of time.");
           if ui.button("OK").clicked() {
-            *game = Game::new();
+            game.reset();
           }
         });
     }

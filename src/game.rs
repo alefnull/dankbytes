@@ -8,7 +8,7 @@ use crate::ui::*;
 
 const INTEREST_RATE: f32 = 0.05; // 5% interest rate
 
-#[derive(Default, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
 pub enum GameLength {
   #[default]
   Short = 30,
@@ -108,5 +108,10 @@ impl Game {
       self.debt -= amount;
       self.repay_amt = 0;
     }
+  }
+
+  // MARK: Game::reset()
+  pub fn reset(&mut self) {
+    *self = Game::new();
   }
 }
