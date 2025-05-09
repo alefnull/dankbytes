@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Cargo.toml'  # Only trigger on Cargo.toml changes
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      should_release: ${{ steps.check-tag.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get version from Cargo.toml
+        id: get-version
+        run: |
+          version="v$(grep -m1 '^version = ' Cargo.toml | cut -d '"' -f2)"
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: check-tag
+        run: |
+          if ! git ls-remote --tags origin | grep -q "refs/tags/v${{ steps.get-version.outputs.version }}"; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
+  release:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary: dankbytes.exe
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            binary: dankbytes
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            binary: dankbytes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build
+        env:
+          RUST_BACKTRACE: 1
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Create Release
+        if: matrix.os == 'ubuntu-latest' # Only create the release once
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ needs.check-version.outputs.version }}
+          tag_name: ${{ needs.check-version.outputs.version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.check-version.outputs.version }}
+          files: target/${{ matrix.target }}/release/${{ matrix.binary }}
