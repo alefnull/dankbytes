@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }} || github.event_name == 'workflow_dispatch'
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -80,24 +80,7 @@ jobs:
           gh release delete dev-latest --yes || true
           git push --delete origin dev-latest || true
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: binaries-${{ matrix.os }}
-          path: dankbytes-dev-${{ matrix.simple_target }}.*
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Download all artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: artifacts
-
-      - name: Create Release
+      - name: Update Dev Release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -108,5 +91,4 @@ jobs:
           draft: false
           body: |
             development build from commit ${{ github.sha }}
-          files: |
-            artifacts/**/*
+          files: dankbytes-dev-${{ matrix.simple_target }}.*
