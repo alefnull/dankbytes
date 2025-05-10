@@ -10,9 +10,6 @@ permissions:
 
 jobs:
   build:
-    if: |
-      github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' ||
-      github.event_name == 'push'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -32,39 +29,26 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           target: ${{ matrix.target }}
-
-      - name: Get version from Cargo.toml
-        id: get_version
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          version=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          echo "version=$version" >> $GITHUB_OUTPUT
-
       - name: Build
         run: cargo build --target ${{ matrix.target }}
-
       - name: Package (Unix)
         if: matrix.os != 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/debug
           tar czf ../../../${{ matrix.archive }} ${{ matrix.binary }}
-
       - name: Package (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/debug
           7z a ../../../${{ matrix.archive }} ${{ matrix.binary }}
-
-      # Only Ubuntu checks for version bump and creates versioned release if needed
       - name: Detect version bump and set tag
         if: matrix.os == 'ubuntu-latest'
         id: version_bump
+        shell: bash
         run: |
           latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n1)
           version=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
@@ -75,16 +59,25 @@ jobs:
             echo "tag=dev-latest" >> $GITHUB_OUTPUT
             echo "is_bump=false" >> $GITHUB_OUTPUT
 
-      # All jobs upload to the correct release
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ (matrix.os == 'ubuntu-latest' && steps.version_bump.outputs.tag) || 'dev-latest' }}
-          name: ${{ (matrix.os == 'ubuntu-latest' && steps.version_bump.outputs.tag) || '⚠️ dev-latest' }}
-          prerelease: ${{ (matrix.os == 'ubuntu-latest' && steps.version_bump.outputs.is_bump != 'true') || true }}
+          tag_name: ${{ steps.version_bump.outputs.tag || 'dev-latest' }}
+          name: ${{ steps.version_bump.outputs.tag == 'dev-latest' && '⚠️ dev-latest' || steps.version_bump.outputs.tag }}
+          prerelease: ${{ steps.version_bump.outputs.is_bump != 'true' }}
           draft: false
           body: |
-            ${{ (matrix.os == 'ubuntu-latest' && steps.version_bump.outputs.is_bump == 'true') && format('Official release {0} from commit {1}', steps.version_bump.outputs.tag, github.sha) || format('Rolling development build from commit {0}', github.sha) }}
+            ${{ steps.version_bump.outputs.is_bump == 'true' && format('Official release {0} from commit {1}', steps.version_bump.outputs.tag, github.sha) || format('Rolling development build from commit {0}', github.sha) }}
           files: ${{ matrix.archive }}
+        if: matrix.os == 'ubuntu-latest'
+
+      - name: Upload to Release (other platforms)
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version_bump.outputs.tag || 'dev-latest' }}
+          files: ${{ matrix.archive }}
+        if: matrix.os != 'ubuntu-latest'

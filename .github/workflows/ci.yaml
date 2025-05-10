@@ -26,6 +26,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo registry, git, and build (optimized for Windows)
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ runner.os == 'Windows' && 'target/debug/deps' || '~/.cargo/registry' }}
+            ${{ runner.os == 'Windows' && 'target/debug/.fingerprint' || '~/.cargo/git' }}
+            ${{ runner.os != 'Windows' && 'target' || '' }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
       - name: Fmt
         run: cargo fmt -- --check
       - name: Clippy
