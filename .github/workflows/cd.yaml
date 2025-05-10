@@ -1,0 +1,130 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  push:
+    paths:
+      - 'Cargo.toml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: |
+      github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' ||
+      github.event_name == 'push'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            binary: dankbytes
+            archive: dankbytes-dev-x86_64-linux.tar.gz
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            binary: dankbytes
+            archive: dankbytes-dev-x86_64-macos.tar.gz
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary: dankbytes.exe
+            archive: dankbytes-dev-x86_64-windows.zip
+
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Get version from Cargo.toml
+        id: get_version
+        run: |
+          version=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Build
+        run: cargo build --target ${{ matrix.target }}
+
+      - name: Package (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/debug
+          tar czf ../../../${{ matrix.archive }} ${{ matrix.binary }}
+
+      - name: Package (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/debug
+          7z a ../../../${{ matrix.archive }} ${{ matrix.binary }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.archive }}
+          path: ${{ matrix.archive }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Detect version bump
+        id: version_bump
+        run: |
+          # Get latest tag (if any)
+          latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+          # Get version from Cargo.toml
+          version=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          # Compare
+          if [[ "$latest_tag" != "v$version" ]]; then
+            echo "bump=true" >> $GITHUB_OUTPUT
+            echo "new_version=v$version" >> $GITHUB_OUTPUT
+          else
+            echo "bump=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create/Update dev-latest release
+        if: steps.version_bump.outputs.bump != 'true'
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: dev-latest
+          name: "⚠️ dev-latest"
+          prerelease: true
+          draft: false
+          body: |
+            Rolling development build from commit ${{ github.sha }}
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip
+
+      - name: Create versioned release
+        if: steps.version_bump.outputs.bump == 'true'
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version_bump.outputs.new_version }}
+          name: ${{ steps.version_bump.outputs.new_version }}
+          prerelease: false
+          draft: false
+          body: |
+            Official release ${{ steps.version_bump.outputs.new_version }} from commit ${{ github.sha }}
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip

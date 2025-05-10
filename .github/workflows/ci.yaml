@@ -3,8 +3,19 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'justfile'
+      - 'LICENSE'
+      - 'README.md'
+      - 'rustfmt.toml'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - 'justfile'
+      - 'LICENSE'
+      - 'README.md'
+      - 'rustfmt.toml'
 
 jobs:
   test:
