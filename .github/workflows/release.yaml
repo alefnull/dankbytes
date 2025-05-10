@@ -85,11 +85,9 @@ jobs:
           path: |
             ${{ runner.os != 'Windows' && '~/.cargo/registry/' || '' }}
             ${{ runner.os != 'Windows' && '~/.cargo/git/' || '' }}
-            ${{ runner.os == 'Windows' && '~/.cargo/registry/index/' || '' }}
-            ${{ runner.os == 'Windows' && '~/.cargo/registry/cache/' || '' }}
-            ${{ runner.os == 'Windows' && '~/.cargo/git/db/' || '' }}
-            ${{ runner.os == 'Windows' && '~/.cargo/git/checkouts/' || '' }}
-            target/
+            ${{ runner.os == 'Windows' && 'target/debug/deps/' || '' }}
+            ${{ runner.os == 'Windows' && 'target/debug/.fingerprint/' || '' }}
+            ${{ runner.os != 'Windows' && 'target/' || '' }}
           key: dev-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             dev-${{ runner.os }}-cargo-
@@ -102,7 +100,6 @@ jobs:
       - name: Build
         env:
           RUST_BACKTRACE: 1
-          CARGO_BUILD_JOBS: ${{ runner.os == 'Windows' && 2 || '' }}  # Limit parallel jobs on Windows
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Create Release
