@@ -18,7 +18,7 @@ on:
       - 'rustfmt.toml'
 
 jobs:
-  test:
+  check:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -26,11 +26,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Build
-        run: cargo build --verbose
-      - name: Test
-        run: cargo test --verbose
-      - name: Clippy
-        run: cargo clippy -- -D warnings
       - name: Fmt
         run: cargo fmt -- --check
+      - name: Clippy
+        run: cargo clippy -- -D warnings
+      - name: Clippy (release)
+        run: cargo clippy --release -- -D warnings
+      - name: Check
+        run: cargo check --all-targets --all-features
+      - name: Build
+        run: cargo build --verbose
+      - name: Test (all features)
+        run: cargo test --all-features --verbose
+

@@ -4,9 +4,6 @@ on:
   workflow_run:
     workflows: ["CI"]
     types: [completed]
-  push:
-    paths:
-      - 'Cargo.toml'
 
 permissions:
   contents: write
@@ -32,9 +29,6 @@ jobs:
             target: x86_64-pc-windows-msvc
             binary: dankbytes.exe
             archive: dankbytes-dev-x86_64-windows.zip
-
-    outputs:
-      version: ${{ steps.get_version.outputs.version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -65,66 +59,30 @@ jobs:
           cd target/${{ matrix.target }}/debug
           7z a ../../../${{ matrix.archive }} ${{ matrix.binary }}
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.archive }}
-          path: ${{ matrix.archive }}
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: artifacts
-
-      - name: Detect version bump
+      # Only Ubuntu checks for version bump and creates versioned release if needed
+      - name: Detect version bump and set tag
+        if: matrix.os == 'ubuntu-latest'
         id: version_bump
         run: |
-          # Get latest tag (if any)
           latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n1)
-          # Get version from Cargo.toml
           version=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          # Compare
           if [[ "$latest_tag" != "v$version" ]]; then
-            echo "bump=true" >> $GITHUB_OUTPUT
-            echo "new_version=v$version" >> $GITHUB_OUTPUT
+            echo "tag=v$version" >> $GITHUB_OUTPUT
+            echo "is_bump=true" >> $GITHUB_OUTPUT
           else
-            echo "bump=false" >> $GITHUB_OUTPUT
-          fi
+            echo "tag=dev-latest" >> $GITHUB_OUTPUT
+            echo "is_bump=false" >> $GITHUB_OUTPUT
 
-      - name: Create/Update dev-latest release
-        if: steps.version_bump.outputs.bump != 'true'
+      # All jobs upload to the correct release
+      - name: Upload to Release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: dev-latest
-          name: "⚠️ dev-latest"
-          prerelease: true
+          tag_name: ${{ (matrix.os == 'ubuntu-latest' && steps.version_bump.outputs.tag) || 'dev-latest' }}
+          name: ${{ (matrix.os == 'ubuntu-latest' && steps.version_bump.outputs.tag) || '⚠️ dev-latest' }}
+          prerelease: ${{ (matrix.os == 'ubuntu-latest' && steps.version_bump.outputs.is_bump != 'true') || true }}
           draft: false
           body: |
-            Rolling development build from commit ${{ github.sha }}
-          files: |
-            artifacts/**/*.tar.gz
-            artifacts/**/*.zip
-
-      - name: Create versioned release
-        if: steps.version_bump.outputs.bump == 'true'
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.version_bump.outputs.new_version }}
-          name: ${{ steps.version_bump.outputs.new_version }}
-          prerelease: false
-          draft: false
-          body: |
-            Official release ${{ steps.version_bump.outputs.new_version }} from commit ${{ github.sha }}
-          files: |
-            artifacts/**/*.tar.gz
-            artifacts/**/*.zip
+            ${{ (matrix.os == 'ubuntu-latest' && steps.version_bump.outputs.is_bump == 'true') && format('Official release {0} from commit {1}', steps.version_bump.outputs.tag, github.sha) || format('Rolling development build from commit {0}', github.sha) }}
+          files: ${{ matrix.archive }}
