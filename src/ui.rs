@@ -64,16 +64,24 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
       );
     });
     // MARK: game over section
-    if game.days_left == 0 {
+    if game.days_left == 0 || (game.cash == 0 && !game.inventory.has_items()) {
       game.game_over = true;
       let mut game_over = game.game_over;
+      let game_over_message = if game.days_left == 0 {
+        "Game Over! You have run out of time."
+      } else if game.cash == 0 && !game.inventory.has_items() {
+        "Game Over! You are out of cash and have no items to sell."
+      } else {
+        "Game Over!"
+      };
+
       egui::Window::new("Game Over")
         .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
         .resizable(false)
         .title_bar(false)
         .open(&mut game_over)
         .show(ctx, |ui| {
-          ui.label("Game Over! You have run out of time.");
+          ui.label(game_over_message);
           if ui.button("OK").clicked() {
             game.reset();
           }
@@ -98,7 +106,11 @@ pub fn main_panel(game: &mut Game, ctx: &egui::Context) {
 fn render_debt_repayment(game: &mut Game, ui: &mut egui::Ui) {
   ui.add_enabled_ui(game.debt != 0, |ui| {
     ui.horizontal(|ui| {
-      let max_repay = if game.debt > 0 { game.debt } else { 1 };
+      let max_repay = if game.debt > 0 {
+        game.debt.min(game.cash)
+      } else {
+        1
+      };
       ui.add(
         egui::Slider::new(&mut game.repay_amt, 0..=max_repay)
           .trailing_fill(true)
