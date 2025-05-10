@@ -9,45 +9,14 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            binary: dankbytes
-            archive: dankbytes-dev-x86_64-linux.tar.gz
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            binary: dankbytes
-            archive: dankbytes-dev-x86_64-macos.tar.gz
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            binary: dankbytes.exe
-            archive: dankbytes-dev-x86_64-windows.zip
-
+  detect-version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.set_tag.outputs.tag }}
+      is_bump: ${{ steps.set_tag.outputs.is_bump }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          target: ${{ matrix.target }}
-      - name: Build
-        run: cargo build --target ${{ matrix.target }}
-      - name: Package (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          cd target/${{ matrix.target }}/debug
-          tar czf ../../../${{ matrix.archive }} ${{ matrix.binary }}
-      - name: Package (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          cd target/${{ matrix.target }}/debug
-          7z a ../../../${{ matrix.archive }} ${{ matrix.binary }}
-      - name: Detect version bump and set tag
-        if: matrix.os == 'ubuntu-latest'
-        id: version_bump
+      - id: set_tag
         shell: bash
         run: |
           latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n1)
@@ -58,27 +27,68 @@ jobs:
           else
             echo "tag=dev-latest" >> $GITHUB_OUTPUT
             echo "is_bump=false" >> $GITHUB_OUTPUT
+
+  build:
+    needs: detect-version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            binary: dankbytes
+            simple_target: x86_64-linux
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            binary: dankbytes
+            simple_target: x86_64-macos
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary: dankbytes.exe
+            simple_target: x86_64-windows
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
+      - name: Build
+        run: cargo build --target ${{ matrix.target }}
+
+      - name: Set archive name
+        id: archive
+        run: |
+          if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
+            echo "archive=dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
+            echo "archive_win=dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
+          else
+            echo "archive=dankbytes-dev-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
+            echo "archive_win=dankbytes-dev-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
           fi
+        shell: bash
+
+      - name: Package (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/debug
+          tar czf ../../../$ARCHIVE ${{ matrix.binary }}
+
+      - name: Package (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/debug
+          7z a ../../../$ARCHIVE_WIN ${{ matrix.binary }}
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.version_bump.outputs.tag || 'dev-latest' }}
-          name: ${{ steps.version_bump.outputs.tag == 'dev-latest' && '⚠️ dev-latest' || steps.version_bump.outputs.tag }}
-          prerelease: ${{ steps.version_bump.outputs.is_bump != 'true' }}
+          tag_name: ${{ needs.detect-version.outputs.tag }}
+          name: ${{ needs.detect-version.outputs.tag == 'dev-latest' && '⚠️ dev-latest' || needs.detect-version.outputs.tag }}
+          prerelease: ${{ needs.detect-version.outputs.is_bump != 'true' }}
           draft: false
           body: |
-            ${{ steps.version_bump.outputs.is_bump == 'true' && format('Official release {0} from commit {1}', steps.version_bump.outputs.tag, github.sha) || format('Rolling development build from commit {0}', github.sha) }}
-          files: ${{ matrix.archive }}
-        if: matrix.os == 'ubuntu-latest'
-
-      - name: Upload to Release (other platforms)
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.version_bump.outputs.tag || 'dev-latest' }}
-          files: ${{ matrix.archive }}
-        if: matrix.os != 'ubuntu-latest'
+            ${{ needs.detect-version.outputs.is_bump == 'true' && format('Official release {0} from commit {1}', needs.detect-version.outputs.tag, github.sha) || format('Rolling development build from commit {0}', github.sha) }}
+          files: ${{ matrix.os == 'windows-latest' && steps.archive.outputs.archive_win || steps.archive.outputs.archive }}
