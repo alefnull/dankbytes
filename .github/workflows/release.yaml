@@ -79,16 +79,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache
+      - name: Cache Registry
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.os != 'Windows' && '~/.cargo/registry/' || '' }}
+            ${{ runner.os != 'Windows' && '~/.cargo/git/' || '' }}
+            ${{ runner.os == 'Windows' && '~/.cargo/registry/index/' || '' }}
+            ${{ runner.os == 'Windows' && '~/.cargo/registry/cache/' || '' }}
+            ${{ runner.os == 'Windows' && '~/.cargo/git/db/' || '' }}
+            ${{ runner.os == 'Windows' && '~/.cargo/git/checkouts/' || '' }}
+            target/
+          key: dev-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
+            dev-${{ runner.os }}-cargo-
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -98,6 +102,7 @@ jobs:
       - name: Build
         env:
           RUST_BACKTRACE: 1
+          CARGO_BUILD_JOBS: ${{ runner.os == 'Windows' && 2 || '' }}  # Limit parallel jobs on Windows
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Create Release

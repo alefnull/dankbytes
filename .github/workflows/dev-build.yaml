@@ -37,8 +37,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo/registry/
-            ~/.cargo/git/
+            ${{ runner.os != 'Windows' && '~/.cargo/registry/' || '' }}
+            ${{ runner.os != 'Windows' && '~/.cargo/git/' || '' }}
+            ${{ runner.os == 'Windows' && '~/.cargo/registry/index/' || '' }}
+            ${{ runner.os == 'Windows' && '~/.cargo/registry/cache/' || '' }}
+            ${{ runner.os == 'Windows' && '~/.cargo/git/db/' || '' }}
+            ${{ runner.os == 'Windows' && '~/.cargo/git/checkouts/' || '' }}
             target/
           key: dev-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
@@ -53,6 +57,7 @@ jobs:
         env:
           CARGO_TERM_COLOR: always
           RUST_BACKTRACE: 1
+          CARGO_BUILD_JOBS: ${{ runner.os == 'Windows' && 2 || '' }}  # Limit parallel jobs on Windows
         run: cargo build --target ${{ matrix.target }}  # Deliberately omit --release for debug builds
 
       - name: Package Binary (Windows)

@@ -32,6 +32,7 @@ pub struct Game {
   pub debt: u32,
   pub repay_amt: u32,
   pub event: Option<Event>,
+  #[cfg(debug_assertions)]
   pub dev_mode: bool,
   #[cfg(debug_assertions)]
   pub dev_window_open: bool,
