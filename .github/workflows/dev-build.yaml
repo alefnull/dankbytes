@@ -17,10 +17,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            binary: dankbytes.exe
-            simple_target: x86_64-windows
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             binary: dankbytes
@@ -29,6 +25,10 @@ jobs:
             target: x86_64-apple-darwin
             binary: dankbytes
             simple_target: x86_64-macos
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary: dankbytes.exe
+            simple_target: x86_64-windows
 
     steps:
       - uses: actions/checkout@v4
