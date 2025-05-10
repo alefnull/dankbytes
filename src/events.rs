@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use rand::Rng;
 
-use crate::drugs::{Drug, get_rand_drug};
+use crate::drugs::{Drug, get_rand_drug, get_rand_prices};
 use crate::inventory::Inventory;
 
 const EVENT_CHANCE: f32 = 0.1;
@@ -90,8 +90,8 @@ fn steal_drugs(held_inv: &mut Inventory, rng: &mut impl Rng) -> HashMap<Drug, u3
 
   if held_inv.has_items() {
     (0..rng.random_range(MUGGING_DRUGS_MIN..=MUGGING_DRUGS_MAX)).for_each(|_| {
-      if let Some(held_amt) = held_inv.get_amount(get_rand_drug()).filter(|&amt| amt > 0) {
-        let drug = get_rand_drug();
+      let drug = get_rand_drug(); // Get random drug once
+      if let Some(held_amt) = held_inv.get_amount(drug).filter(|&amt| amt > 0) {
         let mugged_amt = rng.random_range(1..=held_amt);
         mugged_map.entry(drug).or_insert(0).add_assign(mugged_amt);
         held_inv.remove(drug, mugged_amt).unwrap_or_default();
@@ -117,22 +117,22 @@ fn steal_cash(held_cash: &mut u32, rng: &mut impl Rng) -> u32 {
 fn create_mugging_message(mugged_map: &HashMap<Drug, u32>, cash_taken: u32) -> String {
   match (mugged_map.is_empty(), cash_taken) {
     (true, 0) => "You were mugged, but they found nothing to take!".to_string(),
-    _ => {
+    (true, cash) => format!("You were mugged! They took ${}!", cash),
+    (false, 0) => {
       let list = mugged_map
         .iter()
         .map(|(drug, count)| format!("{} {}", count, drug))
         .collect::<Vec<_>>()
         .join(", ");
-
-      format!(
-        "You were mugged! They took {}{}",
-        list,
-        if cash_taken > 0 {
-          format!(" and ${}!", cash_taken)
-        } else {
-          "!".to_string()
-        }
-      )
+      format!("You were mugged! They took {}!", list)
+    }
+    (false, cash) => {
+      let list = mugged_map
+        .iter()
+        .map(|(drug, count)| format!("{} {}", count, drug))
+        .collect::<Vec<_>>()
+        .join(", ");
+      format!("You were mugged! They took {} and ${}!", list, cash)
     }
   }
 }
@@ -145,7 +145,11 @@ pub fn generate_event(game: &mut crate::game::Game) -> Option<Event> {
     let event = match event_type {
       0 => Event::drug_bust(&mut game.prices),
       1 => Event::drug_shipment(&mut game.prices),
-      2 => Event::mugging(&mut game.inventory, &mut game.cash),
+      2 => {
+        let event = Event::mugging(&mut game.inventory, &mut game.cash);
+        game.prices = get_rand_prices();
+        event
+      }
       _ => Event::default(),
     };
     Some(event)
