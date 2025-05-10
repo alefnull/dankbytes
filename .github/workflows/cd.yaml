@@ -27,6 +27,7 @@ jobs:
           else
             echo "tag=dev-latest" >> $GITHUB_OUTPUT
             echo "is_bump=false" >> $GITHUB_OUTPUT
+          fi
 
   build:
     needs: detect-version
