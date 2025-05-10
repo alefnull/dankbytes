@@ -66,23 +66,32 @@ jobs:
           cd target/${{ matrix.target }}/release
           tar czf ../../../dankbytes-dev-${{ matrix.simple_target }}.tar.gz ${{ matrix.binary }}
 
-      # Only manage release from ubuntu job
-      - name: Manage Dev Release
-        if: matrix.os == 'ubuntu-latest'
+      - name: Upload Release Asset
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-assets
+          path: dankbytes-dev-${{ matrix.simple_target }}.*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download Release Assets
+        uses: actions/download-artifact@v3
+        with:
+          name: release-assets
+          path: assets
+
+      - name: Create/Update Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release delete dev-latest --yes || true
           git push --delete origin dev-latest || true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Single release step that all jobs use
-      - name: Update Dev Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: "⚠️ dev-latest"
-          tag_name: dev-latest
-          prerelease: true
-          body: |
-            development build from commit ${{ github.sha }}
-          files: dankbytes-dev-${{ matrix.simple_target }}.*
-          draft: false
+          gh release create dev-latest \
+            --title "⚠️ dev-latest" \
+            --notes "development build from commit ${{ github.sha }}" \
+            --prerelease \
+            ./assets/*
