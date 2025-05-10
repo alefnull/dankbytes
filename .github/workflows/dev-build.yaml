@@ -69,8 +69,11 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-artifact@v3
         with:
-          name: release-assets
-          path: dankbytes-dev-${{ matrix.simple_target }}.*
+          name: release-assets-${{ matrix.os }}
+          path: |
+            dankbytes-dev-${{ matrix.simple_target }}.*
+          if-no-files-found: error
+          retention-days: 1
 
   release:
     needs: build
@@ -78,11 +81,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Download Release Assets
+      - name: Download All Release Assets
         uses: actions/download-artifact@v3
         with:
-          name: release-assets
           path: assets
+
+      - name: List Assets
+        run: ls -R assets
 
       - name: Create/Update Release
         env:
@@ -94,4 +99,4 @@ jobs:
             --title "⚠️ dev-latest" \
             --notes "development build from commit ${{ github.sha }}" \
             --prerelease \
-            ./assets/*
+            assets/**/*
