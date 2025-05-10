@@ -40,6 +40,8 @@ jobs:
 
       - name: Get version from Cargo.toml
         id: get_version
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
         run: |
           version=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
           echo "version=$version" >> $GITHUB_OUTPUT
