@@ -24,12 +24,12 @@ jobs:
     steps:
       - name: Check CI Status
         id: ci-status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           status=$(gh api repos/${{ github.repository }}/commits/${{ github.sha }}/check-runs \
             --jq '.check_runs[] | select(.name == "CI") | .conclusion')
           echo "status=$status" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   check-version:
     needs: check-ci
@@ -55,7 +55,6 @@ jobs:
             echo "should_release=true" >> $GITHUB_OUTPUT
           else
             echo "should_release=false" >> $GITHUB_OUTPUT
-          fi
 
   release:
     needs: [check-ci, check-version]
@@ -104,6 +103,8 @@ jobs:
       - name: Create Release
         if: matrix.os == 'ubuntu-latest' # Only create the release once
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           name: ${{ needs.check-version.outputs.version }}
           tag_name: ${{ needs.check-version.outputs.version }}
@@ -125,6 +126,8 @@ jobs:
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ needs.check-version.outputs.version }}
           files: dankbytes-${{ needs.check-version.outputs.version }}-${{ matrix.simple_target }}.*

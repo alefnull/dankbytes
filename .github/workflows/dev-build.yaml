@@ -52,18 +52,18 @@ jobs:
         env:
           CARGO_TERM_COLOR: always
           RUST_BACKTRACE: 1
-        run: cargo build --target ${{ matrix.target }}
+        run: cargo build --target ${{ matrix.target }}  # Deliberately omit --release for debug builds
 
       - name: Package Binary (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          cd target/${{ matrix.target }}/release
+          cd target/${{ matrix.target }}/debug  # Changed from release to debug
           7z a ../../../dankbytes-dev-${{ matrix.simple_target }}.zip ${{ matrix.binary }}
 
       - name: Package Binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          cd target/${{ matrix.target }}/release
+          cd target/${{ matrix.target }}/debug  # Changed from release to debug
           tar czf ../../../dankbytes-dev-${{ matrix.simple_target }}.tar.gz ${{ matrix.binary }}
 
       - name: Delete existing release
@@ -76,6 +76,8 @@ jobs:
 
       - name: Update Dev Release
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Add missing token
         with:
           name: "⚠️ dev-latest"
           tag_name: dev-latest
