@@ -101,7 +101,7 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
   }
 }
 
-// MARK: render_dev_window()
+// MARK: - DEV render_dev_window()
 #[cfg(debug_assertions)]
 fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
   egui::Window::new("Dev Tools")
@@ -115,7 +115,7 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
       // Update position when window is moved
       game.dev_window_pos = Some(ui.min_rect().min);
 
-      // Money controls
+      // MARK: DEV money controls
       ui.horizontal(|ui| {
         if ui
           .add(Button::new("💵 +1k"))
@@ -133,7 +133,7 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
         }
       });
 
-      // Drug manipulation
+      // MARK: DEV drug manipulation
       ui.horizontal(|ui| {
         let drugs = get_drug_list();
         egui::ComboBox::from_label("")
@@ -171,7 +171,7 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
 
       ui.separator();
 
-      // Event triggers
+      // MARK: DEV event triggers
       ui.horizontal(|ui| {
         if ui
           .add(Button::new("🚨"))

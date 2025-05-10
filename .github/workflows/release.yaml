@@ -12,6 +12,11 @@ on:
         type: boolean
         required: true
         default: false
+      dev_release:
+        description: 'Create a dev-latest release instead of a semantic version release'
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: write
@@ -58,7 +63,7 @@ jobs:
 
   release:
     needs: [check-ci, check-version]
-    if: needs.check-ci.outputs.ci_passed == 'true' && needs.check-version.outputs.should_release == 'true'
+    if: needs.check-ci.outputs.ci_passed == 'true' && (needs.check-version.outputs.should_release == 'true' || inputs.dev_release == 'true')
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -108,28 +113,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{ needs.check-version.outputs.version }}
-          tag_name: ${{ needs.check-version.outputs.version }}
+          name: ${{ inputs.dev_release == 'true' && 'dev-latest' || needs.check-version.outputs.version }}
+          tag_name: ${{ inputs.dev_release == 'true' && 'dev-latest' || needs.check-version.outputs.version }}
           draft: false
-          prerelease: false
-          generate_release_notes: true
-
-      - name: Package Binary (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          cd target/${{ matrix.target }}/release
-          7z a ../../../dankbytes-${{ needs.check-version.outputs.version }}-${{ matrix.simple_target }}.zip ${{ matrix.binary }}
-
-      - name: Package Binary (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          cd target/${{ matrix.target }}/release
-          tar czf ../../../dankbytes-${{ needs.check-version.outputs.version }}-${{ matrix.simple_target }}.tar.gz ${{ matrix.binary }}
-
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.check-version.outputs.version }}
-          files: dankbytes-${{ needs.check-version.outputs.version }}-${{ matrix.simple_target }}.*
+          prerelease: ${{ inputs.dev_release == 'true' }}
