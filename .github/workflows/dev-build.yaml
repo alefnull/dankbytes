@@ -6,7 +6,6 @@ on:
     types:
       - completed
     branches: [main]
-  workflow_dispatch:
 
 permissions:
   contents: write  # Only need contents write for release creation
