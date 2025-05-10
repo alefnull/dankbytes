@@ -67,6 +67,7 @@ impl Game {
       game_length: GameLength::Short,
       days_left: GameLength::Short as u32,
       event: None,
+      #[cfg(debug_assertions)]
       dev_mode: false,
       #[cfg(debug_assertions)]
       dev_window_open: false,
