@@ -9,6 +9,12 @@ use crate::locations::Location;
 
 // MARK: - render_window()
 pub fn render_window(game: &mut Game, ctx: &egui::Context) {
+  // Add dev mode toggle hotkey
+  if ctx.input(|i| i.key_pressed(egui::Key::F12)) {
+    #[cfg(debug_assertions)]
+    game.toggle_dev_mode();
+  }
+
   let mut init = game.init;
   egui::CentralPanel::default().show(ctx, |ui| {
     if init {
@@ -88,6 +94,115 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
         });
     }
   });
+
+  #[cfg(debug_assertions)]
+  if game.dev_mode {
+    render_dev_window(game, ctx);
+  }
+}
+
+// MARK: render_dev_window()
+#[cfg(debug_assertions)]
+fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
+  egui::Window::new("Dev Tools")
+    .title_bar(false)
+    .movable(true)
+    .resizable(false)
+    .min_width(120.0) // Add minimum width
+    .max_width(120.0) // Add maximum width to match minimum
+    .open(&mut game.dev_window_open)
+    .show(ctx, |ui| {
+      // Update position when window is moved
+      game.dev_window_pos = Some(ui.min_rect().min);
+
+      // Money controls
+      ui.horizontal(|ui| {
+        if ui
+          .add(Button::new("💵 +1k"))
+          .on_hover_text("Add $1000 to cash")
+          .clicked()
+        {
+          game.cash += 1000;
+        }
+        if ui
+          .add(Button::new("💵 -1k"))
+          .on_hover_text("Remove $1000 from cash")
+          .clicked()
+        {
+          game.cash = game.cash.saturating_sub(1000);
+        }
+      });
+
+      // Drug manipulation
+      ui.horizontal(|ui| {
+        let drugs = get_drug_list();
+        egui::ComboBox::from_label("")
+          .width(80.0)
+          .selected_text(format!("📦 {}", drugs[game.selected_drug_idx]))
+          .show_ui(ui, |ui| {
+            for (idx, drug) in drugs.iter().enumerate() {
+              ui.selectable_value(&mut game.selected_drug_idx, idx, drug.to_string());
+            }
+          });
+        if ui
+          .add(Button::new("+10"))
+          .on_hover_text(format!(
+            "Add 10 {} to inventory",
+            drugs[game.selected_drug_idx]
+          ))
+          .clicked()
+        {
+          game.inventory.add(drugs[game.selected_drug_idx], 10, 0);
+        }
+        if ui
+          .add(Button::new("-10"))
+          .on_hover_text(format!(
+            "Remove 10 {} from inventory",
+            drugs[game.selected_drug_idx]
+          ))
+          .clicked()
+        {
+          game
+            .inventory
+            .remove(drugs[game.selected_drug_idx], 10)
+            .ok();
+        }
+      });
+
+      ui.separator();
+
+      // Event triggers
+      ui.horizontal(|ui| {
+        if ui
+          .add(Button::new("🚨"))
+          .on_hover_text("Trigger Drug Bust event")
+          .clicked()
+        {
+          game.event = Some(events::Event::drug_bust(&mut game.prices));
+        }
+        if ui
+          .add(Button::new("🚢"))
+          .on_hover_text("Trigger Drug Shipment event")
+          .clicked()
+        {
+          game.event = Some(events::Event::drug_shipment(&mut game.prices));
+        }
+        if ui
+          .add(Button::new("🔪"))
+          .on_hover_text("Trigger Mugging event")
+          .clicked()
+        {
+          game.event = Some(events::Event::mugging(&mut game.inventory, &mut game.cash));
+        }
+        if ui
+          .add(Button::new("⏰"))
+          .on_hover_text("Remove 10 days")
+          .clicked()
+        {
+          game.days_left = game.days_left.saturating_sub(10);
+        }
+      });
+    });
 }
 
 // MARK: - main_panel()

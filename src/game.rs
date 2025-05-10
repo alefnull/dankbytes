@@ -32,6 +32,13 @@ pub struct Game {
   pub debt: u32,
   pub repay_amt: u32,
   pub event: Option<Event>,
+  pub dev_mode: bool,
+  #[cfg(debug_assertions)]
+  pub dev_window_open: bool,
+  #[cfg(debug_assertions)]
+  pub dev_window_pos: Option<egui::Pos2>,
+  #[cfg(debug_assertions)]
+  pub selected_drug_idx: usize,
 }
 
 // MARK: App trait impl
@@ -59,7 +66,20 @@ impl Game {
       game_length: GameLength::Short,
       days_left: GameLength::Short as u32,
       event: None,
+      dev_mode: false,
+      #[cfg(debug_assertions)]
+      dev_window_open: false,
+      #[cfg(debug_assertions)]
+      dev_window_pos: Some(egui::pos2(0.0, 0.0)),
+      #[cfg(debug_assertions)]
+      selected_drug_idx: 0,
     }
+  }
+
+  #[cfg(debug_assertions)]
+  pub fn toggle_dev_mode(&mut self) {
+    self.dev_mode = !self.dev_mode;
+    self.dev_window_open = self.dev_mode; // Add this line
   }
 
   // MARK: Game::travel()
