@@ -51,7 +51,7 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
           // MARK: bottom bar
           egui::TopBottomPanel::bottom("bottom_panel")
             .resizable(false)
-            .exact_height(80.0)
+            .exact_height(40.0)
             .show(ctx, |ui| {
               if game.event.is_some() {
                 ui.horizontal(|ui| {
