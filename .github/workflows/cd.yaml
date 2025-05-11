@@ -83,6 +83,7 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-index
 
       - name: Build
+        shell: bash
         run: |
           if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
             cargo build --release --target ${{ matrix.target }}
@@ -91,6 +92,7 @@ jobs:
 
       - name: Set archive name
         id: archive
+        shell: bash
         run: |
           if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
             echo "archive=dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
@@ -98,9 +100,9 @@ jobs:
           fi
           echo "archive=dankbytes-dev-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
           echo "archive_win=dankbytes-dev-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
-        shell: bash
 
       - name: Package (Unix)
+        shell: bash
         if: matrix.os != 'windows-latest'
         run: |
           if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
@@ -111,6 +113,7 @@ jobs:
           tar czf ../../../${{ steps.archive.outputs.archive_debug }} ${{ matrix.binary }}
 
       - name: Package (Windows)
+        shell: bash
         if: matrix.os == 'windows-latest'
         run: |
           if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
