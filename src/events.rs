@@ -2,6 +2,7 @@ use core::ops::AddAssign;
 use std::collections::HashMap;
 
 use rand::Rng;
+use thousands::Separable;
 
 use crate::drugs::{Drug, get_rand_drug, get_rand_prices};
 use crate::inventory::Inventory;
@@ -74,7 +75,7 @@ impl Event {
     let mut rng = rand::rng();
     let mugged_map = steal_drugs(held_inv, &mut rng);
     let cash_taken = steal_cash(held_cash, &mut rng);
-    let e_msg = create_mugging_message(&mugged_map, cash_taken);
+    let e_msg = create_mugging_message(&mugged_map, *held_cash, cash_taken);
 
     Self {
       e_type: EventType::Mugging,
@@ -104,8 +105,9 @@ fn steal_drugs(held_inv: &mut Inventory, rng: &mut impl Rng) -> HashMap<Drug, u3
 
 // MARK: - steal_cash() [helper]
 fn steal_cash(held_cash: &mut u32, rng: &mut impl Rng) -> u32 {
-  if rng.random::<f32>() < 0.5 {
-    let cash_taken = rng.random_range(1..=(*held_cash / 2));
+  if rng.random::<f32>() < 0.5 && *held_cash > 1 {
+    let max_cash_taken = ((*held_cash - 1) / 2).max(1);
+    let cash_taken = rng.random_range(1..=max_cash_taken);
     *held_cash = held_cash.saturating_sub(cash_taken);
     cash_taken
   } else {
@@ -114,25 +116,42 @@ fn steal_cash(held_cash: &mut u32, rng: &mut impl Rng) -> u32 {
 }
 
 // MARK: - create_mugging_message() [helper]
-fn create_mugging_message(mugged_map: &HashMap<Drug, u32>, cash_taken: u32) -> String {
-  match (mugged_map.is_empty(), cash_taken) {
-    (true, 0) => "You were mugged, but they found nothing to take!".to_string(),
-    (true, cash) => format!("You were mugged! They took ${}!", cash),
-    (false, 0) => {
+fn create_mugging_message(
+  mugged_map: &HashMap<Drug, u32>,
+  cash_before: u32,
+  cash_taken: u32,
+) -> String {
+  match (mugged_map.is_empty(), cash_before, cash_taken) {
+    (true, _, 0) => "You were mugged, but they found nothing to take!".to_string(),
+    (true, cash_before, cash_taken) => {
+      if cash_taken > 0 && cash_before - cash_taken <= 1 {
+        "You were mugged, but they felt bad and left you with a dollar!".to_string()
+      } else {
+        format!(
+          "You were mugged! They took ${}!",
+          cash_taken.separate_with_commas()
+        )
+      }
+    }
+    (false, 0, 0) => {
       let list = mugged_map
         .iter()
-        .map(|(drug, count)| format!("{} {}", count, drug))
+        .map(|(drug, count)| format!("{} {}", count.separate_with_commas(), drug))
         .collect::<Vec<_>>()
         .join(", ");
       format!("You were mugged! They took {}!", list)
     }
-    (false, cash) => {
+    (false, _, cash_taken) => {
       let list = mugged_map
         .iter()
-        .map(|(drug, count)| format!("{} {}", count, drug))
+        .map(|(drug, count)| format!("{} {}", count.separate_with_commas(), drug))
         .collect::<Vec<_>>()
         .join(", ");
-      format!("You were mugged! They took {} and ${}!", list, cash)
+      format!(
+        "You were mugged! They took {} and ${}!",
+        list,
+        cash_taken.separate_with_commas()
+      )
     }
   }
 }
