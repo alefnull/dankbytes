@@ -56,24 +56,17 @@ jobs:
         with:
           target: ${{ matrix.target }}
           
-      - name: Cache target directory
+      - name: Cache cargo registry and target
         uses: actions/cache@v4
-        id: cache
         with:
-          path: target
-          key: |
-            ${{ runner.os }}-target-${{ hashFiles('Cargo.toml') }}-
-            ${{ runner.os == 'windows-latest' && 'windows-deps' || '' }}
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}-v1
           restore-keys: |
-            ${{ runner.os }}-target-
-            ${{ runner.os == 'windows-latest' && 'windows-deps' || '' }}
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-registry
+            ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}-
+            ${{ runner.os }}-cargo-
 
       - name: Build
         shell: bash
@@ -123,7 +116,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ needs.detect-version.outputs.tag }}
-          name: ${{ needs.detect-version.outputs.tag }}
+          name: 🚀 ${{ needs.detect-version.outputs.tag }}
           prerelease: false
           draft: false
           body: |
