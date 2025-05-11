@@ -22,7 +22,8 @@ fn main() -> Result<(), Error> {
       viewport: ViewportBuilder::default()
         .with_inner_size(egui::vec2(840.0, 420.0))
         .with_icon(ico)
-        .with_resizable(false),
+        .with_resizable(false)
+        .with_maximize_button(false),
       centered: true,
       ..Default::default()
     },
