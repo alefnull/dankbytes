@@ -109,12 +109,12 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
+          WORKSPACE=$(echo "${{ github.workspace }}" | sed 's/\\/\//g' | sed 's/://')
+          cd "/$WORKSPACE"
           if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
-            cd ${{ github.workspace }}
-            7z a -tzip ./dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.zip target/${{ matrix.target }}/release/${{ matrix.binary }}
+            7z a -tzip "./dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.zip" "./target/${{ matrix.target }}/release/${{ matrix.binary }}"
           fi
-          cd ${{ github.workspace }}
-          7z a -tzip ./dankbytes-dev-${{ matrix.simple_target }}.zip target/${{ matrix.target }}/debug/${{ matrix.binary }}
+          7z a -tzip "./dankbytes-dev-${{ matrix.simple_target }}.zip" "./target/${{ matrix.target }}/debug/${{ matrix.binary }}"
 
       - name: Upload to Release
         if: needs.detect-version.outputs.is_bump == 'true'
