@@ -98,8 +98,8 @@ jobs:
             echo "archive=dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
             echo "archive_win=dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
           fi
-          echo "archive=dankbytes-dev-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
-          echo "archive_win=dankbytes-dev-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
+          echo "archive_debug=dankbytes-dev-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
+          echo "archive_debug_win=dankbytes-dev-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
 
       - name: Package (Unix)
         shell: bash
@@ -107,10 +107,10 @@ jobs:
         run: |
           if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
             cd target/${{ matrix.target }}/release
-            tar czf ../../../${{ steps.archive.outputs.archive }} ${{ matrix.binary }}
+            tar -czf ${{ steps.archive.outputs.archive }} ${{ matrix.binary }}
           fi
           cd ../debug
-          tar czf ../../../${{ steps.archive.outputs.archive_debug }} ${{ matrix.binary }}
+          tar -czf ${{ steps.archive.outputs.archive_debug }} ${{ matrix.binary }}
 
       - name: Package (Windows)
         shell: bash
@@ -118,10 +118,10 @@ jobs:
         run: |
           if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
             cd target/${{ matrix.target }}/release
-            zip -r ../../../${{ steps.archive.outputs.archive_win }} ${{ matrix.binary }}
+            zip -r ${{ steps.archive.outputs.archive_win }} ${{ matrix.binary }}
           fi
           cd ../debug
-          zip -r ../../../${{ steps.archive.outputs.archive_debug_win }} ${{ matrix.binary }}
+          zip -r ${{ steps.archive.outputs.archive_debug_win }} ${{ matrix.binary }}
 
       - name: Upload to Release
         if: needs.detect-version.outputs.is_bump == 'true'
