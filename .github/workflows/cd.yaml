@@ -121,6 +121,7 @@ jobs:
           zip -r ../../../${{ steps.archive.outputs.archive_debug_win }} ${{ matrix.binary }}
 
       - name: Upload to Release
+        if: needs.detect-version.outputs.is_bump == 'true'
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
