@@ -5,12 +5,14 @@ on:
     workflows: ["CI"]
     types: [completed]
 
+
 permissions:
   contents: write
 
 jobs:
   detect-version:
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     outputs:
       tag: ${{ steps.set_tag.outputs.tag }}
       is_bump: ${{ steps.set_tag.outputs.is_bump }}
