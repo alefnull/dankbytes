@@ -26,16 +26,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Cache cargo registry, git, and build (optimized for Windows)
-        uses: actions/cache@v3
+      - name: Cache target directory
+        uses: actions/cache@v4
+        id: cache
         with:
-          path: |
-            ${{ runner.os == 'Windows' && 'target/debug/deps' || '~/.cargo/registry' }}
-            ${{ runner.os == 'Windows' && 'target/debug/.fingerprint' || '~/.cargo/git' }}
-            ${{ runner.os != 'Windows' && 'target' || '' }}
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path: target
+          key: |
+            ${{ runner.os }}-target-${{ hashFiles('Cargo.toml') }}-
+            ${{ runner.os == 'windows-latest' && 'windows-deps' || '' }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-target-
+            ${{ runner.os == 'windows-latest' && 'windows-deps' || '' }}
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-registry
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-index
       - name: Fmt
         run: cargo fmt -- --check
       - name: Clippy
