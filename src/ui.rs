@@ -3,10 +3,12 @@ use egui_extras::Column;
 use hello_egui::material_icons::icons;
 use thousands::Separable;
 
-use crate::drugs::get_drug_list;
-use crate::events::{self, EventType};
-use crate::game::{Game, GameLength};
-use crate::locations::Location;
+use crate::{
+  drugs::{get_drug_list, get_rand_prices},
+  events,
+  game::{Game, GameLength},
+  locations::Location,
+};
 
 // MARK: - render_window()
 pub fn render_window(game: &mut Game, ctx: &egui::Context) {
@@ -105,8 +107,6 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
 // MARK: - DEV render_dev_window()
 #[cfg(debug_assertions)]
 fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
-  use crate::drugs::get_rand_prices;
-
   egui::Window::new("Dev Tools")
     .title_bar(false)
     .movable(true)
@@ -375,8 +375,8 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
         body.row(18.0, |mut row| {
           let col = if game.event.is_some() {
             match game.event.as_ref().unwrap().e_type {
-              EventType::DrugBust => Color32::RED,
-              EventType::DrugShipment => Color32::GREEN,
+              events::EventType::DrugBust => Color32::RED,
+              events::EventType::DrugShipment => Color32::GREEN,
               _ => Color32::GRAY,
             }
           } else {
