@@ -75,13 +75,6 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-registry
 
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-index
-
       - name: Build
         shell: bash
         run: |
@@ -134,9 +127,7 @@ jobs:
           prerelease: false
           draft: false
           body: |
-            Official release {0} from commit {1}
-            ${{ needs.detect-version.outputs.tag }}
-            ${{ github.sha }}
+            release ${{ needs.detect-version.outputs.tag }} from commit ${{ github.sha }}
           files: ${{ matrix.os == 'windows-latest' && steps.archive.outputs.archive_win || steps.archive.outputs.archive }}
 
       - name: Upload to Dev
@@ -149,6 +140,5 @@ jobs:
           prerelease: true
           draft: false
           body: |
-            Rolling development build from commit {0}
-            ${{ github.sha }}
+            release dev-latest from commit ${{ github.sha }}
           files: ${{ matrix.os == 'windows-latest' && steps.archive.outputs.archive_debug_win || steps.archive.outputs.archive_debug }}
