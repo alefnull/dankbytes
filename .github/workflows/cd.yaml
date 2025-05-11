@@ -99,22 +99,22 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
-            cd target/${{ matrix.target }}/release
-            tar -czf ${{ steps.archive.outputs.archive }} ${{ matrix.binary }}
+            cd ${{ github.workspace }}
+            tar -czf ./dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.tar.gz -C target/${{ matrix.target }}/release ${{ matrix.binary }}
           fi
-          cd ../debug
-          tar -czf ${{ steps.archive.outputs.archive_debug }} ${{ matrix.binary }}
+          cd ${{ github.workspace }}
+          tar -czf ./dankbytes-dev-${{ matrix.simple_target }}.tar.gz -C target/${{ matrix.target }}/debug ${{ matrix.binary }}
 
       - name: Package (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
           if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
-            cd target/${{ matrix.target }}/release
-            7z a ${{ steps.archive.outputs.archive_win }} ${{ matrix.binary }}
+            cd ${{ github.workspace }}
+            7z a -tzip ./dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.zip target/${{ matrix.target }}/release/${{ matrix.binary }}
           fi
-          cd ../debug
-          7z a ${{ steps.archive.outputs.archive_debug_win }} ${{ matrix.binary }}
+          cd ${{ github.workspace }}
+          7z a -tzip ./dankbytes-dev-${{ matrix.simple_target }}.zip target/${{ matrix.target }}/debug/${{ matrix.binary }}
 
       - name: Upload to Release
         if: needs.detect-version.outputs.is_bump == 'true'
