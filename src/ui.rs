@@ -220,6 +220,7 @@ pub fn main_panel(game: &mut Game, ctx: &egui::Context) {
     .show(ctx, |ui| {
       render_stats_header(game, ui);
       ui.separator();
+      ui.add_space(5.0);
       render_inventory_table(game, ui);
     });
 }
