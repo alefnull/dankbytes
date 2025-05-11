@@ -50,12 +50,44 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           target: ${{ matrix.target }}
+          
+      - name: Cache target directory
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: target
+          key: |
+            ${{ runner.os }}-target-${{ hashFiles('Cargo.toml') }}-
+            ${{ runner.os == 'windows-latest' && 'windows-deps' || '' }}
+          restore-keys: |
+            ${{ runner.os }}-target-
+            ${{ runner.os == 'windows-latest' && 'windows-deps' || '' }}
+
+      - name: Cache cargo registry
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-registry
+
+      - name: Cache cargo index
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-index
+
       - name: Build
-        run: cargo build --target ${{ matrix.target }}
+        run: |
+          if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
+            cargo build --release --target ${{ matrix.target }}
+          fi
+          cargo build --target ${{ matrix.target }}
 
       - name: Set archive name
         id: archive
@@ -63,23 +95,30 @@ jobs:
           if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
             echo "archive=dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
             echo "archive_win=dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
-          else
-            echo "archive=dankbytes-dev-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
-            echo "archive_win=dankbytes-dev-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
           fi
+          echo "archive=dankbytes-dev-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
+          echo "archive_win=dankbytes-dev-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Package (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          cd target/${{ matrix.target }}/debug
-          tar czf ../../../${{ steps.archive.outputs.archive }} ${{ matrix.binary }}
+          if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
+            cd target/${{ matrix.target }}/release
+            tar czf ../../../${{ steps.archive.outputs.archive }} ${{ matrix.binary }}
+          fi
+          cd ../debug
+          tar czf ../../../${{ steps.archive.outputs.archive_debug }} ${{ matrix.binary }}
 
       - name: Package (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          cd target/${{ matrix.target }}/debug
-          7z a ../../../${{ steps.archive.outputs.archive_win }} ${{ matrix.binary }}
+          if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
+            cd target/${{ matrix.target }}/release
+            zip -r ../../../${{ steps.archive.outputs.archive_win }} ${{ matrix.binary }}
+          fi
+          cd ../debug
+          zip -r ../../../${{ steps.archive.outputs.archive_debug_win }} ${{ matrix.binary }}
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
@@ -87,9 +126,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ needs.detect-version.outputs.tag }}
-          name: ${{ needs.detect-version.outputs.tag == 'dev-latest' && '⚠️ dev-latest' || needs.detect-version.outputs.tag }}
-          prerelease: ${{ needs.detect-version.outputs.is_bump != 'true' }}
+          name: ${{ needs.detect-version.outputs.tag }}
+          prerelease: false
           draft: false
           body: |
-            ${{ needs.detect-version.outputs.is_bump == 'true' && format('Official release {0} from commit {1}', needs.detect-version.outputs.tag, github.sha) || format('Rolling development build from commit {0}', github.sha) }}
+            Official release {0} from commit {1}
+            ${{ needs.detect-version.outputs.tag }}
+            ${{ github.sha }}
           files: ${{ matrix.os == 'windows-latest' && steps.archive.outputs.archive_win || steps.archive.outputs.archive }}
+
+      - name: Upload to Dev
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: dev-latest
+          name: ⚠️ dev-latest
+          prerelease: true
+          draft: false
+          body: |
+            Rolling development build from commit {0}
+            ${{ github.sha }}
+          files: ${{ matrix.os == 'windows-latest' && steps.archive.outputs.archive_debug_win || steps.archive.outputs.archive_debug }}
