@@ -57,7 +57,7 @@ jobs:
           target: ${{ matrix.target }}
           
       - name: Cache target directory
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: cache
         with:
           path: target
@@ -69,14 +69,14 @@ jobs:
             ${{ runner.os == 'windows-latest' && 'windows-deps' || '' }}
 
       - name: Cache cargo registry
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.cargo/registry
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-registry
 
       - name: Cache cargo index
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('Cargo.toml') }}
