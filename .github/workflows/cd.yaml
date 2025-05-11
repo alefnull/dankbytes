@@ -113,15 +113,15 @@ jobs:
           tar -czf ${{ steps.archive.outputs.archive_debug }} ${{ matrix.binary }}
 
       - name: Package (Windows)
-        shell: powershell
         if: matrix.os == 'windows-latest'
+        shell: bash
         run: |
-          if ("${{ needs.detect-version.outputs.is_bump }}" == "true") {
+          if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
             cd target/${{ matrix.target }}/release
-            Compress-Archive -Path ${{ matrix.binary }} -DestinationPath ${{ steps.archive.outputs.archive_win }}
-          }
+            7z a ${{ steps.archive.outputs.archive_win }} ${{ matrix.binary }}
+          fi
           cd ../debug
-          Compress-Archive -Path ${{ matrix.binary }} -DestinationPath ${{ steps.archive.outputs.archive_debug_win }}
+          7z a ${{ steps.archive.outputs.archive_debug_win }} ${{ matrix.binary }}
 
       - name: Upload to Release
         if: needs.detect-version.outputs.is_bump == 'true'
