@@ -26,6 +26,7 @@ pub struct Game {
   pub location: Location,
   pub inventory: Inventory,
   pub prices: [u32; 7],
+  pub last_prices: [u32; 7],
   pub buy_amts: [u32; 7],
   pub sell_amts: [u32; 7],
   pub cash: u32,
@@ -53,12 +54,14 @@ impl App for Game {
 impl Game {
   // MARK: Game::new()
   pub fn new() -> Game {
+    let rand_prices = get_rand_prices();
     Game {
       init: true,
       game_over: false,
       location: Location::default(),
       inventory: Inventory::default(),
-      prices: get_rand_prices(),
+      prices: rand_prices,
+      last_prices: rand_prices,
       buy_amts: [0; 7],
       sell_amts: [0; 7],
       cash: 2000,
@@ -91,6 +94,7 @@ impl Game {
     }
     self.days_left = self.days_left.saturating_sub(1);
     self.location = location;
+    self.last_prices = self.prices;
     self.prices = get_rand_prices();
     self.debt += (self.debt as f32 * INTEREST_RATE) as u32;
 

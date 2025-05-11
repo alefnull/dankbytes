@@ -35,7 +35,10 @@ impl Inventory {
     self
       .items
       .entry(drug)
-      .and_modify(|(held, _)| held.add(amount))
+      .and_modify(|(a, c)| {
+        a.add(amount);
+        c.reset();
+      })
       .or_insert((Amount::new(amount), Cost::new(cost)));
   }
 

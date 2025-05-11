@@ -1,9 +1,10 @@
-use eframe::egui::{self, Align, Button, Layout, Widget};
+use eframe::egui::{self, Align, Button, Color32, Layout, Widget};
 use egui_extras::Column;
+use hello_egui::material_icons::icons;
 use thousands::Separable;
 
 use crate::drugs::get_drug_list;
-use crate::events;
+use crate::events::{self, EventType};
 use crate::game::{Game, GameLength};
 use crate::locations::Location;
 
@@ -104,6 +105,8 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
 // MARK: - DEV render_dev_window()
 #[cfg(debug_assertions)]
 fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
+  use crate::drugs::get_rand_prices;
+
   egui::Window::new("Dev Tools")
     .title_bar(false)
     .movable(true)
@@ -178,6 +181,8 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
           .on_hover_text("Trigger Drug Bust event")
           .clicked()
         {
+          game.last_prices = game.prices;
+          game.prices = get_rand_prices();
           game.event = Some(events::Event::drug_bust(&mut game.prices));
         }
         if ui
@@ -185,6 +190,8 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
           .on_hover_text("Trigger Drug Shipment event")
           .clicked()
         {
+          game.last_prices = game.prices;
+          game.prices = get_rand_prices();
           game.event = Some(events::Event::drug_shipment(&mut game.prices));
         }
         if ui
@@ -349,6 +356,20 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
     .body(|mut body| {
       for drug in get_drug_list() {
         body.row(14.0, |mut row| {
+          let col = if game.event.is_some() {
+            match game.event.as_ref().unwrap().e_type {
+              EventType::DrugBust => Color32::RED,
+              EventType::DrugShipment => Color32::GREEN,
+              _ => Color32::GRAY,
+            }
+          } else {
+            Color32::GRAY
+          };
+          let ico = match game.prices[drug as usize] {
+            price if price > game.last_prices[drug as usize] => icons::ICON_TRENDING_UP,
+            price if price < game.last_prices[drug as usize] => icons::ICON_TRENDING_DOWN,
+            _ => icons::ICON_TRENDING_FLAT,
+          };
           // MARK: drug name
           row.col(|ui| {
             ui.label(drug.to_string());
@@ -356,29 +377,17 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
           // MARK: drug price
           row.col(|ui| {
             ui.horizontal(|ui| {
-              if game
-                .event
-                .as_ref()
-                .is_some_and(|e| e.e_drugs.contains(&drug))
-              {
-                // ui.visuals_mut().override_text_color = Some(egui::Color32::from_rgb(20, 120, 20));
-                let col = match game.event.as_ref().unwrap().e_type {
-                  events::EventType::DrugBust => egui::Color32::from_rgb(200, 20, 20),
-                  events::EventType::DrugShipment => egui::Color32::from_rgb(20, 200, 20),
-                  _ => egui::Color32::default(),
-                };
+              if game.event.is_some() && game.event.as_ref().unwrap().e_drugs.contains(&drug) {
                 ui.visuals_mut().override_text_color = Some(col);
-                ui.label(format!("${}", game.prices[drug as usize]));
-                ui.reset_style();
-              } else {
-                ui.label(format!("${}", game.prices[drug as usize]));
               }
+              ui.label(ico);
+              ui.label(format!(" ${}", game.prices[drug as usize]));
+              ui.reset_style();
             });
           });
           // MARK: buy section
           row.col(|ui| {
             ui.horizontal(|ui| {
-              ui.separator();
               let max_buy = game.cash / game.prices[drug as usize];
               egui::DragValue::new(&mut game.buy_amts[drug as usize])
                 .range(0..=max_buy)
@@ -395,7 +404,6 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
           // MARK: sell section
           row.col(|ui| {
             ui.horizontal(|ui| {
-              ui.separator();
               let total_inv_amt = game.inventory.get_amount(drug).unwrap_or(0);
               egui::DragValue::new(&mut game.sell_amts[drug as usize])
                 .range(0..=total_inv_amt)
