@@ -121,6 +121,10 @@ impl Cost {
   pub fn get(&self) -> u32 {
     self.0
   }
+
+  pub fn reset(&mut self) {
+    self.0 = 0;
+  }
 }
 
 impl fmt::Display for Cost {

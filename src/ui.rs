@@ -274,7 +274,7 @@ fn render_inventory_table(game: &mut Game, ui: &mut egui::Ui) {
   egui_extras::TableBuilder::new(ui)
     .columns(Column::remainder(), 3)
     .striped(true)
-    .header(14.0, |mut header| {
+    .header(12.0, |mut header| {
       header.col(|ui| {
         ui.label("Drug");
       });
@@ -289,7 +289,7 @@ fn render_inventory_table(game: &mut Game, ui: &mut egui::Ui) {
       for drug in get_drug_list() {
         let amt = game.inventory.get_amount(drug).unwrap_or(0);
         let cost = game.inventory.get_cost(drug).unwrap_or(0);
-        body.row(14.0, |mut row| {
+        body.row(18.0, |mut row| {
           row.col(|ui| {
             ui.label(drug.to_string());
           });
@@ -311,16 +311,16 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
     egui_extras::TableBuilder::new(ui)
       .columns(Column::remainder(), 3)
       .body(|mut body| {
-        for r in 0..=1 {
-          body.row(14.0, |mut row| {
-            for c in 0..=2 {
-              let loc = match r * 3 + c {
-                0 => Location::Fairfield,
+        for t_row in 0..2 {
+          body.row(16.0, |mut row| {
+            for t_cell in 0..3 {
+              let loc = match t_row * 3 + t_cell {
                 1 => Location::Oakwood,
                 2 => Location::Lakeview,
                 3 => Location::Highland,
                 4 => Location::Edgewater,
-                _ => Location::Centerville,
+                5 => Location::Centerville,
+                _ => Location::Fairfield, // 0 or > 5
               };
               row.col(|ui| {
                 if ui
@@ -343,6 +343,7 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
     ui.with_layout(
       egui::Layout::top_down(egui::Align::LEFT).with_main_wrap(true),
       |ui| {
+        ui.add_space(5.0);
         render_drug_trading_table(game, ui);
       },
     );
@@ -352,10 +353,25 @@ pub fn right_panel(game: &mut Game, ctx: &egui::Context) {
 // MARK: render_drug_trading_table()
 fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
   egui_extras::TableBuilder::new(ui)
+    .striped(true)
     .columns(Column::auto(), 4)
+    .header(12.0, |mut header| {
+      header.col(|ui| {
+        ui.label("Drug");
+      });
+      header.col(|ui| {
+        ui.label("Price");
+      });
+      header.col(|ui| {
+        ui.label("Buy");
+      });
+      header.col(|ui| {
+        ui.label("Sell");
+      });
+    })
     .body(|mut body| {
       for drug in get_drug_list() {
-        body.row(14.0, |mut row| {
+        body.row(18.0, |mut row| {
           let col = if game.event.is_some() {
             match game.event.as_ref().unwrap().e_type {
               EventType::DrugBust => Color32::RED,

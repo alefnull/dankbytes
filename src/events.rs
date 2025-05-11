@@ -20,7 +20,7 @@ pub enum EventType {
   DrugBust,
   DrugShipment,
   Mugging,
-  Count, // #types-1
+  Count, // #types
 }
 
 // MARK: - Event struct
