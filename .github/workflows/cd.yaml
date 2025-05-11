@@ -73,13 +73,13 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/debug
-          tar czf ../../../$ARCHIVE ${{ matrix.binary }}
+          tar czf ../../../${{ steps.archive.outputs.archive }} ${{ matrix.binary }}
 
       - name: Package (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/debug
-          7z a ../../../$ARCHIVE_WIN ${{ matrix.binary }}
+          7z a ../../../${{ steps.archive.outputs.archive_win }} ${{ matrix.binary }}
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
