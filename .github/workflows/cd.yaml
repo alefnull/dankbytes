@@ -33,8 +33,8 @@ jobs:
           
       - name: Debug Output (detect-version)
         run: |
-          echo "is_bump: ${{ needs.detect-version.outputs.is_bump }}"
-          echo "tag: ${{ needs.detect-version.outputs.tag }}"
+          echo "is_bump=$is_bump"
+          echo "tag=$tag"
 
 
   build:
