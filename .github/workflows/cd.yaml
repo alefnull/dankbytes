@@ -82,7 +82,6 @@ jobs:
         with:
           tag_name: latest
           name: ⚠️ latest build
-          prerelease: true
           draft: false
           body: |
             latest build from commit ${{ github.sha }}
