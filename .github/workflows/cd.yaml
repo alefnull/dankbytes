@@ -13,28 +13,27 @@ jobs:
   detect-version:
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
-    outputs:
-      tag: ${{ steps.set_tag.outputs.tag }}
-      is_bump: ${{ steps.set_tag.outputs.is_bump }}
     steps:
       - uses: actions/checkout@v4
       - id: set_tag
         shell: bash
         run: |
-          latest_tag=$(git tag --list "v*" --sort=-v:refname | head -n1)
-          version=$(grep "^version" Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          if [[ "$latest_tag" != "v$version" ]]; then
-            echo "tag=v$version" >> $GITHUB_OUTPUT
-            echo "is_bump=true" >> $GITHUB_OUTPUT
+          latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+          version=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          if [[ '$latest_tag' != 'v$version' ]]; then
+            echo 'tag=v$version' >> $GITHUB_OUTPUT
+            echo 'tag=v$version'
+            echo 'is_bump=true' >> $GITHUB_OUTPUT
+            echo 'is_bump=true'
           else
-            echo "tag=dev-latest" >> $GITHUB_OUTPUT
-            echo "is_bump=false" >> $GITHUB_OUTPUT
+            echo 'tag=dev-latest' >> $GITHUB_OUTPUT
+            echo 'tag=dev-latest'
+            echo 'is_bump=false' >> $GITHUB_OUTPUT
+            echo 'is_bump=false'
           fi
-          
-      - name: Debug Output (detect-version)
-        run: |
-          echo "is_bump=$is_bump"
-          echo "tag=$tag"
+    outputs:
+      tag: ${{ steps.set_tag.outputs.tag }}
+      is_bump: ${{ steps.set_tag.outputs.is_bump }}
 
 
   build:
@@ -58,6 +57,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Debug Output (detect-version)
+        run: |
+          echo "is_bump = ${{ needs.detect-version.outputs.is_bump }}"
+          echo "tag = ${{ needs.detect-version.outputs.tag }}"
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
