@@ -36,8 +36,6 @@ pub struct Game {
   #[cfg(debug_assertions)]
   pub dev_mode: bool,
   #[cfg(debug_assertions)]
-  pub dev_window_open: bool,
-  #[cfg(debug_assertions)]
   pub dev_window_pos: Option<egui::Pos2>,
   #[cfg(debug_assertions)]
   pub selected_drug_idx: usize,
@@ -73,8 +71,6 @@ impl Game {
       #[cfg(debug_assertions)]
       dev_mode: false,
       #[cfg(debug_assertions)]
-      dev_window_open: false,
-      #[cfg(debug_assertions)]
       dev_window_pos: Some(egui::pos2(0.0, 0.0)),
       #[cfg(debug_assertions)]
       selected_drug_idx: 0,
@@ -84,7 +80,6 @@ impl Game {
   #[cfg(debug_assertions)]
   pub fn toggle_dev_mode(&mut self) {
     self.dev_mode = !self.dev_mode;
-    self.dev_window_open = self.dev_mode; // Add this line
   }
 
   // MARK: Game::travel()
