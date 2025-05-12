@@ -1,4 +1,4 @@
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![windows_subsystem = "windows"]
 use eframe::egui::{self, ViewportBuilder};
 use eframe::{Error, NativeOptions, Result};
 use hello_egui::material_icons;

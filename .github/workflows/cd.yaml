@@ -10,36 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  detect-version:
-    runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
-    outputs:
-      tag: ${{ steps.set_tag.outputs.tag }}
-      is_bump: ${{ steps.set_tag.outputs.is_bump }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: set_tag
-        shell: bash
-        run: |
-          latest_tag=$(git tag --list --sort=-v:refname | head -n 1)
-          version=$(grep -Pom1 '(?<=version = ")[^"]+(?=")' Cargo.toml)
-
-          if [[ -z "$latest_tag" || "$latest_tag" != "v$version" ]]; then
-            echo "tag=v$version" >> $GITHUB_OUTPUT
-            echo "tag=v$version"
-            echo "is_bump=true" >> $GITHUB_OUTPUT
-            echo "is_bump=true"
-          else
-            echo "tag=dev-latest" >> $GITHUB_OUTPUT
-            echo "tag=dev-latest"
-            echo "is_bump=false" >> $GITHUB_OUTPUT
-            echo "is_bump=false"
-          fi
-
-          cat $GITHUB_OUTPUT
-
   build:
-    needs: detect-version
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -80,67 +51,40 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
-            cargo build --release --target ${{ matrix.target }}
-          fi
-          cargo build --target ${{ matrix.target }}
+          cargo build --release --target ${{ matrix.target }}
 
       - name: Set archive name
         id: archive
         shell: bash
         run: |
-          if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
-            echo "archive=dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
-            echo "archive_win=dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
-          fi
-          echo "archive_debug=dankbytes-dev-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
-          echo "archive_debug_win=dankbytes-dev-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
+          echo "archive=dankbytes-${{ matrix.simple_target }}.tar.gz" >> $GITHUB_OUTPUT
+          echo "archive_win=dankbytes-${{ matrix.simple_target }}.zip" >> $GITHUB_OUTPUT
 
       - name: Package (Unix)
         shell: bash
         if: matrix.os != 'windows-latest'
         run: |
-          if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
-            cd ${{ github.workspace }}
-            tar -czf ./dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.tar.gz -C target/${{ matrix.target }}/release ${{ matrix.binary }}
-          fi
           cd ${{ github.workspace }}
-          tar -czf ./dankbytes-dev-${{ matrix.simple_target }}.tar.gz -C target/${{ matrix.target }}/debug ${{ matrix.binary }}
+          tar -czf ./dankbytes-${{ matrix.simple_target }}.tar.gz -C target/${{ matrix.target }}/release ${{ matrix.binary }}
 
       - name: Package (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
-            WORKSPACE=$(echo "${{ github.workspace }}" | sed 's/\\/\//g' | sed 's/://')
-            cd "/$WORKSPACE"
-            7z a -tzip "./dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.zip" "./target/${{ matrix.target }}/release/${{ matrix.binary }}"
-          fi
-          7z a -tzip "./dankbytes-dev-${{ matrix.simple_target }}.zip" "./target/${{ matrix.target }}/debug/${{ matrix.binary }}"
+          WORKSPACE=$(echo "${{ github.workspace }}" | sed 's/\\/\//g' | sed 's/://')
+          cd "/$WORKSPACE"
+          7z a -tzip "./dankbytes-${{ matrix.simple_target }}.zip" "./target/${{ matrix.target }}/release/${{ matrix.binary }}"
 
-      - name: Upload to Release
-        if: needs.detect-version.outputs.is_bump == 'true'
+      - name: Update Release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ needs.detect-version.outputs.tag }}
-          name: 🚀 ${{ needs.detect-version.outputs.tag }}
-          prerelease: false
-          draft: false
-          body: |
-            release ${{ needs.detect-version.outputs.tag }} from commit ${{ github.sha }}
-          files: ${{ matrix.os == 'windows-latest' && steps.archive.outputs.archive_win || steps.archive.outputs.archive }}
-
-      - name: Upload to Dev
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: dev-latest
-          name: ⚠️ dev-latest
+          tag_name: latest
+          name: ⚠️ latest build
           prerelease: true
           draft: false
           body: |
-            release dev-latest from commit ${{ github.sha }}
-          files: ${{ matrix.os == 'windows-latest' && steps.archive.outputs.archive_debug_win || steps.archive.outputs.archive_debug }}
+            latest build from commit ${{ github.sha }}
+            beware, here be dragons
+          files: ${{ matrix.os == 'windows-latest' && steps.archive.outputs.archive_win || steps.archive.outputs.archive }}

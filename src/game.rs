@@ -33,9 +33,7 @@ pub struct Game {
   pub debt: u32,
   pub repay_amt: u32,
   pub event: Option<Event>,
-  #[cfg(debug_assertions)]
   pub dev_mode: bool,
-  #[cfg(debug_assertions)]
   pub selected_drug_idx: usize,
 }
 
@@ -66,14 +64,11 @@ impl Game {
       game_length: GameLength::Short,
       days_left: GameLength::Short as u32,
       event: None,
-      #[cfg(debug_assertions)]
       dev_mode: false,
-      #[cfg(debug_assertions)]
       selected_drug_idx: 0,
     }
   }
 
-  #[cfg(debug_assertions)]
   pub fn toggle_dev_mode(&mut self) {
     self.dev_mode = !self.dev_mode;
   }

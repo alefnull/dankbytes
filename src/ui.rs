@@ -11,11 +11,9 @@ use crate::{drugs::get_drug_list, events, game::Game, locations::Location};
 pub fn render_window(game: &mut Game, ctx: &egui::Context) {
   // Add dev mode toggle hotkey
   if ctx.input(|i| i.key_pressed(egui::Key::F12)) {
-    #[cfg(debug_assertions)]
     game.toggle_dev_mode();
   }
 
-  #[cfg(debug_assertions)]
   if game.dev_mode {
     render_dev_window(game, ctx);
   }
@@ -143,7 +141,6 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
 }
 
 // MARK: - DEV render_dev_window()
-#[cfg(debug_assertions)]
 fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
   use crate::drugs::get_rand_prices;
   use eframe::egui::{ViewportBuilder, ViewportId};
@@ -163,7 +160,6 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
     |ctx, _| {
       egui::CentralPanel::default().show(ctx, |ui| {
         if ctx.input(|i| i.key_pressed(egui::Key::F12)) {
-          #[cfg(debug_assertions)]
           game.toggle_dev_mode();
         }
         // MARK: DEV money controls
@@ -483,50 +479,3 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
       }
     });
 }
-
-// MARK: render_new_table()
-// fn render_new_table(game: &mut Game, ui: &mut egui::Ui) {
-// fn render_new_table(game: &mut Game, ui: &mut egui::Ui) {
-//   egui_extras::TableBuilder::new(ui)
-//     .columns(Column::remainder(), 7)
-//     .striped(true)
-//     .body(|mut body| {
-//       for drug in get_drug_list().iter() {
-//         body.row(12.0, |mut row| {
-//           row.col(|ui| {
-//             ui.label(drug.to_string());
-//           });
-//           row.col(|ui| {
-//             ui.label(format!("{}", game.inventory.get_amount(*drug).unwrap_or(0)));
-//           });
-//           row.col(|ui| {
-//             ui.label(format!("${}", game.inventory.get_cost(*drug).unwrap_or(0)));
-//           });
-//           row.col(|ui| {
-//             ui.add_enabled_ui(
-//               game.cash >= game.prices[*drug as usize]
-//                 && game.inventory.get_amount(*drug).unwrap_or(0) < u32::MAX,
-//               |ui| {
-//                 let max_buy = game.cash / game.prices[*drug as usize];
-//                 ui.horizontal(|ui| {
-//                   DragValue::new(&mut game.buy_amts[*drug as usize])
-//                     .range(0..=max_buy)
-//                     .ui(ui);
-//                   if ui.button("Buy").clicked() {
-//                     game.buy(*drug, 1);
-//                   }
-//                 });
-//               },
-//             );
-//           });
-//           row.col(|ui| {
-//             ui.add_enabled_ui(game.inventory.get_amount(*drug).unwrap_or(0) > 0, |ui| {
-//               if ui.button("Sell").clicked() {
-//                 game.sell(*drug, 1);
-//               }
-//             });
-//           });
-//         });
-//       }
-//     });
-// }
