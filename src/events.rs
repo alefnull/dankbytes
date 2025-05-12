@@ -106,7 +106,7 @@ fn steal_drugs(held_inv: &mut Inventory, rng: &mut impl Rng) -> HashMap<Drug, u3
 // MARK: - steal_cash() [helper]
 fn steal_cash(held_cash: &mut u32, rng: &mut impl Rng) -> u32 {
   if rng.random::<f32>() < 0.5 && *held_cash > 1 {
-    let max_cash_taken = ((*held_cash - 1) / 2).max(1);
+    let max_cash_taken = ((*held_cash - 1) / 4).max(1);
     let cash_taken = rng.random_range(1..=max_cash_taken);
     *held_cash = held_cash.saturating_sub(cash_taken);
     cash_taken
@@ -133,7 +133,7 @@ fn create_mugging_message(
         )
       }
     }
-    (false, 0, 0) => {
+    (false, _, 0) => {
       let list = mugged_map
         .iter()
         .map(|(drug, count)| format!("{} {}", count.separate_with_commas(), drug))
