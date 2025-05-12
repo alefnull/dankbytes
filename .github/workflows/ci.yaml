@@ -8,6 +8,7 @@ on:
       - 'LICENSE'
       - 'README.md'
       - 'rustfmt.toml'
+      - 'assets/dankshot-WIP.png'
   pull_request:
     branches: [main]
     paths-ignore:
