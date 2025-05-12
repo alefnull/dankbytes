@@ -1,14 +1,11 @@
-use eframe::egui::{self, Align, Button, Color32, Layout, Widget};
+use eframe::egui::text::LayoutJob;
+use eframe::egui::{self, Align, Button, Color32, FontId, Layout, TextFormat, Widget};
 use egui_extras::Column;
 use hello_egui::material_icons::icons;
 use thousands::Separable;
 
-use crate::{
-  drugs::get_drug_list,
-  events,
-  game::{Game, GameLength},
-  locations::Location,
-};
+use crate::game::GameLength;
+use crate::{drugs::get_drug_list, events, game::Game, locations::Location};
 
 // MARK: - render_window()
 pub fn render_window(game: &mut Game, ctx: &egui::Context) {
@@ -18,30 +15,40 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
     game.toggle_dev_mode();
   }
 
+  #[cfg(debug_assertions)]
+  if game.dev_mode {
+    render_dev_window(game, ctx);
+  }
+
   let mut init = game.init;
   egui::CentralPanel::default().show(ctx, |ui| {
     if init {
       // MARK: game init window
       egui::Window::new("Game Init")
         .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+        .max_width(200.0)
         .title_bar(false)
         .resizable(false)
         .open(&mut init)
         .show(ctx, |ui| {
-          ui.horizontal(|ui| {
+          ui.vertical_centered(|ui| {
             ui.label("Game Length:");
-            ui.radio_value(&mut game.game_length, GameLength::Short, "One Month");
-            ui.radio_value(&mut game.game_length, GameLength::Medium, "Six Months");
-            ui.radio_value(&mut game.game_length, GameLength::Long, "One Year");
+            ui.add_space(5.0);
+            ui.vertical_centered_justified(|ui| {
+              ui.radio_value(&mut game.game_length, GameLength::Short, "One Month");
+              ui.radio_value(&mut game.game_length, GameLength::Medium, "Six Months");
+              ui.radio_value(&mut game.game_length, GameLength::Long, "One Year");
+            });
+            ui.add_space(5.0);
+            if ui.button("Start").clicked() {
+              game.days_left = match game.game_length {
+                GameLength::Short => 30,
+                GameLength::Medium => 180,
+                GameLength::Long => 360,
+              };
+              game.init = false;
+            }
           });
-          if ui.button("Start").clicked() {
-            game.days_left = match game.game_length {
-              GameLength::Short => 30,
-              GameLength::Medium => 180,
-              GameLength::Long => 360,
-            };
-            game.init = false;
-          }
         });
       return;
     }
@@ -90,18 +97,49 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
         .title_bar(false)
         .open(&mut game_over)
         .show(ctx, |ui| {
-          ui.label(game_over_message);
-          if ui.button("OK").clicked() {
-            game.reset();
-          }
+          ui.vertical_centered(|ui| {
+            ui.label(game_over_message);
+            ui.add_space(5.0);
+            ui.label(format!("Final Cash: ${}", game.cash.separate_with_commas()));
+            ui.label(format!("Final Debt: ${}", game.debt.separate_with_commas()));
+
+            let (score, color) = if game.cash < game.debt {
+              (
+                format!(
+                  "-{}",
+                  (game.debt.saturating_sub(game.cash)).separate_with_commas()
+                ),
+                Color32::RED,
+              )
+            } else {
+              (
+                game.cash.saturating_sub(game.debt).separate_with_commas(),
+                Color32::GREEN,
+              )
+            };
+
+            let mut job = LayoutJob::default();
+            job.append(
+              "Final Score: ",
+              0.0,
+              TextFormat::simple(FontId::default(), Color32::GRAY),
+            );
+            job.append(
+              score.as_str(),
+              0.0,
+              TextFormat::simple(FontId::default(), color),
+            );
+            ui.label(job);
+
+            ui.add_space(5.0);
+
+            if ui.button("OK").clicked() {
+              game.reset();
+            }
+          });
         });
     }
   });
-
-  #[cfg(debug_assertions)]
-  if game.dev_mode {
-    render_dev_window(game, ctx);
-  }
 }
 
 // MARK: - DEV render_dev_window()
@@ -114,7 +152,7 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
     .resizable(false)
     .min_width(120.0) // Add minimum width
     .max_width(120.0) // Add maximum width to match minimum
-    .open(&mut game.dev_window_open)
+    .open(&mut game.dev_mode)
     .show(ctx, |ui| {
       // Update position when window is moved
       game.dev_window_pos = Some(ui.min_rect().min);
@@ -135,13 +173,11 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
         {
           game.cash = game.cash.saturating_sub(1000);
         }
-      });
-
-      // MARK: DEV drug manipulation
-      ui.horizontal(|ui| {
+        ui.separator();
+        // MARK: DEV drug manipulation
         let drugs = get_drug_list();
         egui::ComboBox::from_label("")
-          .width(80.0)
+          .width(75.0)
           .selected_text(format!("📦 {}", drugs[game.selected_drug_idx]))
           .show_ui(ui, |ui| {
             for (idx, drug) in drugs.iter().enumerate() {
@@ -178,7 +214,7 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
       // MARK: DEV event triggers
       ui.horizontal(|ui| {
         if ui
-          .add(Button::new("🚨"))
+          .add(Button::new("🚨Bust"))
           .on_hover_text("Trigger Drug Bust event")
           .clicked()
         {
@@ -187,7 +223,7 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
           game.event = Some(events::Event::drug_bust(&mut game.prices));
         }
         if ui
-          .add(Button::new("🚢"))
+          .add(Button::new("🚢Shipment"))
           .on_hover_text("Trigger Drug Shipment event")
           .clicked()
         {
@@ -196,18 +232,11 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
           game.event = Some(events::Event::drug_shipment(&mut game.prices));
         }
         if ui
-          .add(Button::new("🔪"))
+          .add(Button::new("🔪Mugging"))
           .on_hover_text("Trigger Mugging event")
           .clicked()
         {
           game.event = Some(events::Event::mugging(&mut game.inventory, &mut game.cash));
-        }
-        if ui
-          .add(Button::new("⏰"))
-          .on_hover_text("Remove 10 days")
-          .clicked()
-        {
-          game.days_left = game.days_left.saturating_sub(10);
         }
       });
     });
