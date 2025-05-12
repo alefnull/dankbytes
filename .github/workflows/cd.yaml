@@ -30,6 +30,12 @@ jobs:
             echo "tag=dev-latest" >> $GITHUB_OUTPUT
             echo "is_bump=false" >> $GITHUB_OUTPUT
           fi
+          
+      - name: Debug Output (detect-version)
+        run: |
+          echo "is_bump: ${{ needs.detect-version.outputs.is_bump }}"
+          echo "tag: ${{ needs.detect-version.outputs.tag }}"
+
 
   build:
     needs: detect-version
@@ -104,9 +110,9 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          WORKSPACE=$(echo "${{ github.workspace }}" | sed 's/\\/\//g' | sed 's/://')
-          cd "/$WORKSPACE"
           if [[ "${{ needs.detect-version.outputs.is_bump }}" == "true" ]]; then
+            WORKSPACE=$(echo "${{ github.workspace }}" | sed 's/\\/\//g' | sed 's/://')
+            cd "/$WORKSPACE"
             7z a -tzip "./dankbytes-${{ needs.detect-version.outputs.tag }}-${{ matrix.simple_target }}.zip" "./target/${{ matrix.target }}/release/${{ matrix.binary }}"
           fi
           7z a -tzip "./dankbytes-dev-${{ matrix.simple_target }}.zip" "./target/${{ matrix.target }}/debug/${{ matrix.binary }}"
