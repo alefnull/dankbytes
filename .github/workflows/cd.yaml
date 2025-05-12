@@ -20,20 +20,25 @@ jobs:
         run: |
           latest_tag=$(git describe --abbrev=0 --match='v*' --tags)
           version=$(grep -Pom1 '(?<=version = ")[^"]+(?=")' Cargo.toml)
-          echo "latest_tag=$latest_tag"
-          echo "version=$version"
-          if [[ "$latest_tag" != "v$version" ]]; then
-            echo "compare=$([[ "$latest_tag" != "v$version" ]] && echo true || echo false)"
-            echo "tag=v$version" >> $GITHUB_OUTPUT
-            echo "tag=v$version"
-            echo "is_bump=true" >> $GITHUB_OUTPUT
-            echo "is_bump=true"
+          if [[ -n "$latest_tag" ]]; then
+            echo "latest_tag=$latest_tag"
+            echo "version=$version"
+            if [[ "$latest_tag" != "v$version" ]]; then
+              echo "compare=$([[ "$latest_tag" != "v$version" ]] && echo true || echo false)"
+              echo "tag=v$version" >> $GITHUB_OUTPUT
+              echo "tag=v$version"
+              echo "is_bump=true" >> $GITHUB_OUTPUT
+              echo "is_bump=true"
+            else
+              echo "compare=$([[ "$latest_tag" != "v$version" ]] && echo true || echo false)"
+              echo "tag=dev-latest" >> $GITHUB_OUTPUT
+              echo "tag=dev-latest"
+              echo "is_bump=false" >> $GITHUB_OUTPUT
+              echo "is_bump=false"
+            fi
           else
-            echo "compare=$([[ "$latest_tag" != "v$version" ]] && echo true || echo false)"
-            echo "tag=dev-latest" >> $GITHUB_OUTPUT
-            echo "tag=dev-latest"
+            echo "No matching tags found in the repository" >> $GITHUB_OUTPUT
             echo "is_bump=false" >> $GITHUB_OUTPUT
-            echo "is_bump=false"
           fi
           cat $GITHUB_OUTPUT
 
