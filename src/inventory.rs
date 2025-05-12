@@ -37,7 +37,7 @@ impl Inventory {
       .entry(drug)
       .and_modify(|(a, c)| {
         a.add(amount);
-        c.reset();
+        c.0 = cost;
       })
       .or_insert((Amount::new(amount), Cost::new(cost)));
   }
@@ -120,10 +120,6 @@ impl Cost {
 
   pub fn get(&self) -> u32 {
     self.0
-  }
-
-  pub fn reset(&mut self) {
-    self.0 = 0;
   }
 }
 

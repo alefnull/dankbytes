@@ -6,7 +6,7 @@ use crate::inventory::Inventory;
 use crate::locations::*;
 use crate::ui::*;
 
-const INTEREST_RATE: f32 = 0.05; // 5% interest rate
+const INTEREST_RATE: f32 = 0.1;
 
 #[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
 pub enum GameLength {

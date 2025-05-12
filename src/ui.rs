@@ -153,7 +153,7 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
     ViewportBuilder::default()
       .with_inner_size(egui::vec2(300.0, 100.0))
       .with_always_on_top()
-      .with_close_button(false)
+      // .with_close_button(false)
       .with_maximize_button(false)
       .with_minimize_button(false)
       .with_resizable(false)
@@ -249,6 +249,9 @@ fn render_dev_window(game: &mut Game, ctx: &egui::Context) {
           }
         });
       });
+      if ctx.input(|i| i.viewport().close_requested()) {
+        game.dev_mode = false;
+      }
     },
   );
 }
