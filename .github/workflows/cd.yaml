@@ -21,10 +21,10 @@ jobs:
       - id: set_tag
         shell: bash
         run: |
-          latest_tag=$(git describe --abbrev=0 --match='v*' --tags > /dev/null 2>&1 || true)
+          latest_tag=$(git describe --abbrev=0 --match='v*' --tags > /dev/null 2>&1)
           version=$(grep -Pom1 '(?<=version = ")[^"]+(?=")' Cargo.toml)
 
-          if [[ "$latest_tag" != "v$version" ]]; then
+          if [[ -z "$latest_tag" || "$latest_tag" != "v$version" ]]; then
             echo "tag=v$version" >> $GITHUB_OUTPUT
             echo "tag=v$version"
             echo "is_bump=true" >> $GITHUB_OUTPUT
