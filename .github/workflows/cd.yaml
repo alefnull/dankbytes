@@ -24,7 +24,7 @@ jobs:
           latest_tag=$(git tag --list "v*" --sort=-v:refname | head -n1)
           version=$(grep -Pom1 '(?<=version = ")[^"]+(?=")' Cargo.toml)
 
-          if [[ -n "$latest_tag" && "$latest_tag" != "v$version" ]]; then
+          if [[ "$latest_tag" != "v$version" ]]; then
             echo "tag=v$version" >> $GITHUB_OUTPUT
             echo "tag=v$version"
             echo "is_bump=true" >> $GITHUB_OUTPUT
