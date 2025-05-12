@@ -36,8 +36,6 @@ pub struct Game {
   #[cfg(debug_assertions)]
   pub dev_mode: bool,
   #[cfg(debug_assertions)]
-  pub dev_window_pos: Option<egui::Pos2>,
-  #[cfg(debug_assertions)]
   pub selected_drug_idx: usize,
 }
 
@@ -70,8 +68,6 @@ impl Game {
       event: None,
       #[cfg(debug_assertions)]
       dev_mode: false,
-      #[cfg(debug_assertions)]
-      dev_window_pos: Some(egui::pos2(0.0, 0.0)),
       #[cfg(debug_assertions)]
       selected_drug_idx: 0,
     }
