@@ -21,7 +21,7 @@ jobs:
       - id: set_tag
         shell: bash
         run: |
-          latest_tag=$(git describe --abbrev=0 --match='v*' --tags)
+          latest_tag=$(git tag --list "v*" --sort=-v:refname | head -n1)
           version=$(grep -Pom1 '(?<=version = ")[^"]+(?=")' Cargo.toml)
 
           if [[ -n "$latest_tag" && "$latest_tag" != "v$version" ]]; then
