@@ -19,7 +19,7 @@ jobs:
         shell: bash
         run: |
           latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n1)
-          version=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          version=$(grep ^version Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
           if [[ $latest_tag != 'v'$version ]]; then
             echo 'tag=v'$version >> $GITHUB_OUTPUT
             echo 'tag=v'$version
