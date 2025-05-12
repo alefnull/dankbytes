@@ -13,6 +13,9 @@ jobs:
   detect-version:
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
+    outputs:
+      tag: ${{ steps.set_tag.outputs.tag }}
+      is_bump: ${{ steps.set_tag.outputs.is_bump }}
     steps:
       - uses: actions/checkout@v4
       - id: set_tag
@@ -20,32 +23,20 @@ jobs:
         run: |
           latest_tag=$(git describe --abbrev=0 --match='v*' --tags)
           version=$(grep -Pom1 '(?<=version = ")[^"]+(?=")' Cargo.toml)
-          if [[ -n "$latest_tag" ]]; then
-            echo "latest_tag=$latest_tag"
-            echo "version=$version"
-            if [[ "$latest_tag" != "v$version" ]]; then
-              echo "compare=$([[ "$latest_tag" != "v$version" ]] && echo true || echo false)"
-              echo "tag=v$version" >> $GITHUB_OUTPUT
-              echo "tag=v$version"
-              echo "is_bump=true" >> $GITHUB_OUTPUT
-              echo "is_bump=true"
-            else
-              echo "compare=$([[ "$latest_tag" != "v$version" ]] && echo true || echo false)"
-              echo "tag=dev-latest" >> $GITHUB_OUTPUT
-              echo "tag=dev-latest"
-              echo "is_bump=false" >> $GITHUB_OUTPUT
-              echo "is_bump=false"
-            fi
+
+          if [[ -n "$latest_tag" && "$latest_tag" != "v$version" ]]; then
+            echo "tag=v$version" >> $GITHUB_OUTPUT
+            echo "tag=v$version"
+            echo "is_bump=true" >> $GITHUB_OUTPUT
+            echo "is_bump=true"
           else
-            echo "No matching tags found in the repository" >> $GITHUB_OUTPUT
+            echo "tag=dev-latest" >> $GITHUB_OUTPUT
+            echo "tag=dev-latest"
             echo "is_bump=false" >> $GITHUB_OUTPUT
+            echo "is_bump=false"
           fi
+
           cat $GITHUB_OUTPUT
-
-    outputs:
-      tag: ${{ steps.set_tag.outputs.tag }}
-      is_bump: ${{ steps.set_tag.outputs.is_bump }}
-
 
   build:
     needs: detect-version
