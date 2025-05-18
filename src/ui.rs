@@ -107,12 +107,12 @@ pub fn render_window(game: &mut Game, ctx: &egui::Context) {
                   "-{}",
                   (game.debt.saturating_sub(game.cash)).separate_with_commas()
                 ),
-                Color32::RED,
+                Color32::LIGHT_RED,
               )
             } else {
               (
                 game.cash.saturating_sub(game.debt).separate_with_commas(),
-                Color32::GREEN,
+                Color32::LIGHT_GREEN,
               )
             };
 
@@ -415,8 +415,8 @@ fn render_drug_trading_table(game: &mut Game, ui: &mut egui::Ui) {
         body.row(18.0, |mut row| {
           let col = if game.event.is_some() {
             match game.event.as_ref().unwrap().e_type {
-              events::EventType::DrugBust => Color32::RED,
-              events::EventType::DrugShipment => Color32::GREEN,
+              events::EventType::DrugBust => Color32::LIGHT_RED,
+              events::EventType::DrugShipment => Color32::LIGHT_GREEN,
               _ => Color32::GRAY,
             }
           } else {

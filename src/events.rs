@@ -7,11 +7,11 @@ use thousands::Separable;
 use crate::drugs::{Drug, get_rand_drug, get_rand_prices};
 use crate::inventory::Inventory;
 
-const EVENT_CHANCE: f32 = 0.1;
+const EVENT_CHANCE: f32 = 0.15;
 const BUSTED_DRUGS_MIN: usize = 1;
-const BUSTED_DRUGS_MAX: usize = 3;
+const BUSTED_DRUGS_MAX: usize = 6;
 const MUGGING_DRUGS_MIN: usize = 1;
-const MUGGING_DRUGS_MAX: usize = 5;
+const MUGGING_DRUGS_MAX: usize = 4;
 
 // MARK: EventType
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
