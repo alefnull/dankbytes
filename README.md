@@ -1,5 +1,6 @@
 <h1 align="center">Dank Bytes</h1>
 
+
 <p align="center">
   <img src="https://img.shields.io/github/license/alefnull/dankbytes" alt="License">
   <img src="https://img.shields.io/github/actions/workflow/status/alefnull/dankbytes/ci.yaml?branch=main" alt="CI Status">
@@ -7,6 +8,8 @@
     <img src="https://img.shields.io/github/v/release/alefnull/dankbytes" alt="Release">
   </a>
 </p>
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/E1E11F8P04)
 
 ## About ##
 
